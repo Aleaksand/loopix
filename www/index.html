@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Blast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1a1a3e 0%, #2d2d5a 100%);
+        }
+        h1 {
+            margin: 20px 0;
+            font-size: 1.8em;
+            letter-spacing: 2px;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            padding: 0 20px;
+        }
+        #scoreBoard {
+            display: flex;
+            gap: 40px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .score-label {
+            font-size: 0.75em;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .score-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        #mainCanvas {
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            cursor: crosshair;
+        }
+        #previewPanel {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .preview-slot {
+            width: 70px;
+            height: 70px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .preview-slot.has-block:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .preview-slot.selected {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+            transform: scale(1.1);
+        }
+        .preview-slot.empty {
+            opacity: 0.3;
+            border-style: dotted;
+            cursor: default;
+        }
+        .preview-slot canvas {
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .rotate-indicator {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .preview-slot.selected .rotate-indicator {
+            opacity: 1;
+        }
+        #settingsBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        #settingsBtn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+        }
+        #settingsModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        #settingsModal.show {
+            display: flex;
+        }
+        .settings-content {
+            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .settings-content h2 {
+            margin-bottom: 30px;
+            color: white;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+        .settings-btn {
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            font-size: 1em;
+            border-radius: 16px;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.3s;
+            font-weight: 600;
+            width: 100%;
+        }
+        .settings-btn.primary {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
+        }
+        .settings-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.5);
+        }
+        .settings-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .settings-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        #gameOverScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        #gameOverScreen.show {
+            display: flex;
+        }
+        #gameOverScreen h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            text-shadow: 0 0 30px rgba(79, 195, 247, 0.5);
+        }
+        #finalScore {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        #finalLoops {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Circuit Blast</h1>
+    <div id="settingsBtn" onclick="game.openSettings()">⚙️</div>
+    <div id="gameContainer">
+        <div id="scoreBoard">
+            <div class="score-item">
+                <span class="score-label">Счёт</span>
+                <span class="score-value" id="score">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Рекорд</span>
+                <span class="score-value" id="highScore">0</span>
+            </div>
+        </div>
+        <canvas id="mainCanvas" width="300" height="300"></canvas>
+        <div id="previewPanel">
+            <div class="preview-slot has-block" id="slot0" data-index="0">
+                <canvas id="preview0" width="50" height="50"></canvas>
+                <span class="rotate-indicator">↻</span>
+            </div>
+            <div class="preview-slot has-block" id="slot1" data-index="1">
+                <canvas id="preview1" width="50" height="50"></canvas>
+                <span class="rotate-indicator">↻</span>
+            </div>
+            <div class="preview-slot has-block" id="slot2" data-index="2">
+                <canvas id="preview2" width="50" height="50"></canvas>
+                <span class="rotate-indicator">↻</span>
+            </div>
+        </div>
+    </div>
+    <div id="settingsModal">
+        <div class="settings-content">
+            <h2>⚙️ Настройки</h2>
+            <button class="settings-btn primary" onclick="game.newGame(); game.closeSettings()">🔄 Начать заново</button>
+            <button class="settings-btn secondary" onclick="game.closeSettings()">✕ Закрыть</button>
+        </div>
+    </div>
+    <div id="gameOverScreen">
+        <h2>GAME OVER</h2>
+        <div id="finalScore">Счёт: 0</div>
+        <div id="finalLoops">Петель: 0</div>
+        <button class="settings-btn primary" onclick="game.newGame()">🔄 Начать заново</button>
+    </div>
+    <script>
+        const COLORS = {
+            blocks: {
+                STRAIGHT: '#4fc3f7',
+                CORNER: '#69f0ae',
+                T_SHAPE: '#ffd54f',
+                CROSS: '#ff8a65'
+            },
+            chainColors: {
+                small: ['#4fc3f7', '#69f0ae', '#ffd54f'],
+                medium: ['#ff6b9d', '#4fc3f7', '#69f0ae'],
+                large: ['#ffd54f', '#ff8a65', '#ff6b9d'],
+                epic: ['#e040fb', '#7c4dff', '#448aff'],
+                legendary: ['#ff1744', '#f50057', '#d500f9']
+            }
+        };
+        const BLOCK_TYPES = {
+            EMPTY: { connectors: [0,0,0,0], color: '#2c3e50' },
+            STRAIGHT: { variants: [{ connectors: [1,0,1,0] },{ connectors: [0,1,0,1] }] },
+            CORNER: { variants: [{ connectors: [1,1,0,0] },{ connectors: [0,1,1,0] },{ connectors: [0,0,1,1] },{ connectors: [1,0,0,1] }] },
+            T_SHAPE: { variants: [{ connectors: [1,1,1,0] },{ connectors: [0,1,1,1] },{ connectors: [1,0,1,1] },{ connectors: [1,1,0,1] }] },
+            CROSS: { connectors: [1,1,1,1] }
+        };
+        class Block {
+            constructor(type, variant = 0) {
+                this.type = type;
+                this.variant = variant;
+                this.rotation = 0;
+                if (type === 'CROSS') {
+                    this.connectors = [...BLOCK_TYPES.CROSS.connectors];
+                } else if (type === 'EMPTY') {
+                    this.connectors = [...BLOCK_TYPES.EMPTY.connectors];
+                } else {
+                    const variants = BLOCK_TYPES[type].variants;
+                    this.connectors = [...variants[variant].connectors];
+                }
+                this.updateColor();
+            }
+            updateColor() {
+                const colors = COLORS.blocks;
+                if (this.type === 'CROSS') this.color = colors.CROSS;
+                else if (this.type === 'EMPTY') this.color = '#2c3e50';
+                else this.color = colors[this.type];
+            }
+            rotate() {
+                const [top, right, bottom, left] = this.connectors;
+                this.connectors = [left, top, right, bottom];
+                this.rotation = (this.rotation + 90) % 360;
+            }
+            getConnector(direction) { return this.connectors[direction]; }
+            getConnectorCount() { return this.connectors.filter(c => c).length; }
+        }
+        class CircuitBlast {
+            constructor() {
+                this.canvas = document.getElementById('mainCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gridSize = 6;
+                this.cellSize = 50;
+                this.grid = [];
+                this.score = 0;
+                this.highScore = parseInt(localStorage.getItem('circuitBlastHigh')) || 0;
+                this.loops = 0;
+                this.combo = 1;
+                this.previewBlocks = [null, null, null];
+                this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
+                this.isGameOver = false;
+                this.particles = [];
+                this.lastLoopCells = new Set();
+                this.chainGlowColors = new Map();
+                this.init();
+            }
+            init() {
+                this.updateScore();
+                this.setupGrid();
+                this.placeInitialBlocks();
+                this.generateNewSet();
+                this.setupEvents();
+                this.animate();
+            }
+            placeInitialBlocks() {
+                const innerPositions = [];
+                for (let y = 1; y < this.gridSize - 1; y++) {
+                    for (let x = 1; x < this.gridSize - 1; x++) {
+                        innerPositions.push({x, y});
+                    }
+                }
+                for (let i = innerPositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [innerPositions[i], innerPositions[j]] = [innerPositions[j], innerPositions[i]];
+                }
+                const numInitial = 2 + Math.floor(Math.random() * 2);
+                for (let i = 0; i < numInitial && i < innerPositions.length; i++) {
+                    const pos = innerPositions[i];
+                    const block = this.randomBlock();
+                    const rotations = Math.floor(Math.random() * 4);
+                    for (let r = 0; r < rotations; r++) block.rotate();
+                    this.grid[pos.y][pos.x] = block;
+                }
+            }
+            openSettings() { document.getElementById('settingsModal').classList.add('show'); }
+            closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+            setupGrid() {
+                this.grid = [];
+                for (let y = 0; y < this.gridSize; y++) {
+                    const row = [];
+                    for (let x = 0; x < this.gridSize; x++) row.push(null);
+                    this.grid.push(row);
+                }
+            }
+            generateNewSet() {
+                for (let i = 0; i < 3; i++) this.previewBlocks[i] = this.randomBlock();
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+                this.renderPreviews();
+                if (!this.canPlaceAny()) this.gameOver();
+            }
+            updateSlotClasses() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    slot.classList.remove('selected', 'has-block', 'empty');
+                    if (this.previewBlocks[i] === null) slot.classList.add('empty');
+                    else {
+                        slot.classList.add('has-block');
+                        if (this.selectedSlot === i) slot.classList.add('selected');
+                    }
+                }
+            }
+            randomBlock() {
+                const types = ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'];
+                const weights = [2, 3, 2, 1];
+                const total = weights.reduce((a, b) => a + b, 0);
+                let random = Math.random() * total;
+                for (let i = 0; i < types.length; i++) {
+                    random -= weights[i];
+                    if (random <= 0) {
+                        const type = types[i];
+                        let variant = 0;
+                        if (BLOCK_TYPES[type].variants) variant = Math.floor(Math.random() * BLOCK_TYPES[type].variants.length);
+                        return new Block(type, variant);
+                    }
+                }
+                return new Block('STRAIGHT', 0);
+            }
+            setupEvents() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    slot.addEventListener('click', (e) => { e.stopPropagation(); this.onSlotClick(i); });
+                }
+                this.canvas.addEventListener('mousemove', (e) => this.onCanvasMove(e));
+                this.canvas.addEventListener('mouseleave', () => this.onCanvasLeave());
+                this.canvas.addEventListener('click', (e) => this.onCanvasClick(e));
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); this.onCanvasMove(e.touches[0]); });
+                this.canvas.addEventListener('touchend', (e) => { e.preventDefault(); this.onCanvasClick(e.changedTouches[0]); });
+            }
+            onSlotClick(slotIndex) {
+                if (this.isGameOver) return;
+                if (this.previewBlocks[slotIndex] === null) return;
+                if (this.selectedSlot === slotIndex) this.previewBlocks[slotIndex].rotate();
+                else this.selectedSlot = slotIndex;
+                this.updateSlotClasses();
+                this.renderPreviews();
+            }
+            onCanvasMove(e) {
+                if (this.isGameOver) return;
+                if (this.selectedSlot === null) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const gridX = Math.floor(x / this.cellSize);
+                const gridY = Math.floor(y / this.cellSize);
+                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize) this.hoverCell = { x: gridX, y: gridY };
+                else this.hoverCell = { x: -1, y: -1 };
+            }
+            onCanvasLeave() { this.hoverCell = { x: -1, y: -1 }; }
+            onCanvasClick(e) {
+                if (this.isGameOver) return;
+                if (this.selectedSlot === null) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const gridX = Math.floor(x / this.cellSize);
+                const gridY = Math.floor(y / this.cellSize);
+                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize && !this.grid[gridY][gridX]) {
+                    this.placeBlock(gridX, gridY, this.selectedSlot);
+                }
+            }
+            placeBlock(x, y, slotIndex) {
+                const block = this.previewBlocks[slotIndex];
+                this.grid[y][x] = block;
+                this.previewBlocks[slotIndex] = null;
+                this.selectedSlot = null;
+                const loops = this.findLoops();
+                if (loops.length > 0) {
+                    this.combo = loops.length;
+                    this.assignGlowColors(loops);
+                    this.clearLoops(loops);
+                } else this.combo = 1;
+                const remaining = this.previewBlocks.filter(b => b !== null).length;
+                if (remaining === 0) setTimeout(() => this.generateNewSet(), 400);
+                else if (!this.canPlaceRemaining()) this.gameOver();
+                this.updateSlotClasses();
+                this.renderPreviews();
+                this.updateScore();
+            }
+            canPlaceAny() {
+                for (let y = 0; y < this.gridSize; y++) for (let x = 0; x < this.gridSize; x++) if (!this.grid[y][x]) return true;
+                return false;
+            }
+            canPlaceRemaining() {
+                let freeCells = 0;
+                for (let y = 0; y < this.gridSize; y++) for (let x = 0; x < this.gridSize; x++) if (!this.grid[y][x]) freeCells++;
+                const remainingBlocks = this.previewBlocks.filter(b => b !== null).length;
+                return freeCells >= remainingBlocks;
+            }
+            isClosedLoop(component) {
+                if (component.size < 2) return false;
+                for (const cellKey of component) {
+                    const [cx, cy] = cellKey.split(',').map(Number);
+                    const block = this.grid[cy][cx];
+                    if (!block) continue;
+                    const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                    for (const {dx, dy, dir, opposite} of directions) {
+                        if (block.getConnector(dir)) {
+                            const nx = cx + dx, ny = cy + dy;
+                            const neighborKey = `${nx},${ny}`;
+                            if (!component.has(neighborKey)) return false;
+                            const neighbor = this.grid[ny][nx];
+                            if (!neighbor || !neighbor.getConnector(opposite)) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            findLoops() {
+                const loops = [];
+                const processed = new Set();
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const key = `${x},${y}`;
+                        if (!this.grid[y][x] || processed.has(key)) continue;
+                        const component = this.findConnectedComponent(x, y);
+                        for (const cellKey of component) processed.add(cellKey);
+                        if (this.isClosedLoop(component)) loops.push(component);
+                    }
+                }
+                return loops;
+            }
+            findConnectedComponent(startX, startY) {
+                const component = new Set();
+                const queue = [{x: startX, y: startY}];
+                const visited = new Set([`${startX},${startY}`]);
+                while (queue.length > 0) {
+                    const {x, y} = queue.shift();
+                    const block = this.grid[y][x];
+                    if (!block) continue;
+                    component.add(`${x},${y}`);
+                    const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                    for (const {dx, dy, dir, opposite} of directions) {
+                        if (!block.getConnector(dir)) continue;
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) continue;
+                        const neighbor = this.grid[ny][nx];
+                        if (!neighbor) continue;
+                        if (!neighbor.getConnector(opposite)) continue;
+                        const nextKey = `${nx},${ny}`;
+                        if (visited.has(nextKey)) continue;
+                        visited.add(nextKey);
+                        queue.push({x: nx, y: ny});
+                    }
+                }
+                return component;
+            }
+            assignGlowColors(loops) {
+                this.chainGlowColors.clear();
+                const colors = COLORS.chainColors;
+                loops.forEach((loop, index) => {
+                    const size = loop.size;
+                    let palette;
+                    if (size <= 6) palette = colors.small;
+                    else if (size <= 10) palette = colors.medium;
+                    else if (size <= 15) palette = colors.large;
+                    else if (size <= 20) palette = colors.epic;
+                    else palette = colors.legendary;
+                    const colorIndex = index % palette.length;
+                    const glowColor = palette[colorIndex];
+                    loop.forEach(key => this.chainGlowColors.set(key, glowColor));
+                });
+            }
+            clearLoops(loops) {
+                let totalCells = 0;
+                this.lastLoopCells.clear();
+                loops.forEach(loop => {
+                    totalCells += loop.size;
+                    loop.forEach(key => this.lastLoopCells.add(key));
+                    loop.forEach(key => {
+                        const [x, y] = key.split(',').map(Number);
+                        const glowColor = this.chainGlowColors.get(key) || '#4fc3f7';
+                        this.createExplosion(x, y, glowColor);
+                        this.grid[y][x] = null;
+                    });
+                });
+                const sizeBonus = loops.reduce((sum, loop) => sum + loop.size, 0);
+                const points = sizeBonus * sizeBonus * 10 * this.combo;
+                this.score += points;
+                this.loops += loops.length;
+                this.updateScore();
+                setTimeout(() => { this.lastLoopCells.clear(); this.chainGlowColors.clear(); }, 600);
+            }
+            createExplosion(gridX, gridY, color) {
+                const x = gridX * this.cellSize + this.cellSize / 2;
+                const y = gridY * this.cellSize + this.cellSize / 2;
+                const particleCount = 20;
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = (Math.PI * 2 * i) / particleCount;
+                    const speed = 3 + Math.random() * 5;
+                    this.particles.push({x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 1, color: color, size: 3 + Math.random() * 4, decay: 0.01 + Math.random() * 0.02});
+                }
+            }
+            renderPreviews() {
+                for (let i = 0; i < 3; i++) {
+                    const canvas = document.getElementById(`preview${i}`);
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 50, 50);
+                    if (this.previewBlocks[i] !== null) this.drawBlock(ctx, this.previewBlocks[i], 0, 0, 50, false, true);
+                }
+            }
+            hasConnection(x, y, direction) {
+                const block = this.grid[y]?.[x];
+                if (!block) return false;
+                if (!block.getConnector(direction)) return false;
+                const directions = [{dx: 0, dy: -1, opposite: 2},{dx: 1, dy: 0, opposite: 3},{dx: 0, dy: 1, opposite: 0},{dx: -1, dy: 0, opposite: 1}];
+                const dir = directions[direction];
+                const nx = x + dir.dx, ny = y + dir.dy;
+                if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return false;
+                const neighbor = this.grid[ny][nx];
+                if (!neighbor) return false;
+                return neighbor.getConnector(dir.opposite);
+            }
+            getGlowColor(x, y) {
+                const key = `${x},${y}`;
+                if (this.lastLoopCells.has(key)) return this.chainGlowColors.get(key) || '#fff';
+                return null;
+            }
+            drawBlock(ctx, block, x, y, size, isHighlighted = false, isPreview = false, glowColor = null) {
+                const padding = 2, s = size - padding * 2, px = x + padding, py = y + padding;
+                const gridX = Math.floor(x / this.cellSize), gridY = Math.floor(y / this.cellSize);
+                const connected = isPreview ? [false, false, false, false] : [this.hasConnection(gridX, gridY, 0),this.hasConnection(gridX, gridY, 1),this.hasConnection(gridX, gridY, 2),this.hasConnection(gridX, gridY, 3)];
+                let hasFree = false;
+                if (!isPreview && this.grid[gridY][gridX]) hasFree = this.hasFreeConnectors(gridX, gridY);
+                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 20; } else ctx.shadowBlur = 0;
+                if (isHighlighted) ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                else if (glowColor) ctx.fillStyle = glowColor + '33';
+                else if (hasFree) ctx.fillStyle = 'rgba(255, 107, 157, 0.15)';
+                else ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(px, py, s, s);
+                ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : (hasFree ? '#ff6b9d' : block.color));
+                ctx.lineWidth = glowColor ? 3 : (isHighlighted ? 3 : 2);
+                ctx.lineCap = 'square';
+                ctx.shadowBlur = 0;
+                if (!connected[0]) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + s, py); ctx.stroke(); }
+                if (!connected[1]) { ctx.beginPath(); ctx.moveTo(px + s, py); ctx.lineTo(px + s, py + s); ctx.stroke(); }
+                if (!connected[2]) { ctx.beginPath(); ctx.moveTo(px + s, py + s); ctx.lineTo(px, py + s); ctx.stroke(); }
+                if (!connected[3]) { ctx.beginPath(); ctx.moveTo(px, py + s); ctx.lineTo(px, py); ctx.stroke(); }
+                ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : block.color);
+                ctx.lineWidth = glowColor ? 5 : (isHighlighted ? 5 : 4);
+                ctx.lineCap = 'round';
+                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10; }
+                const centerX = x + size / 2, centerY = y + size / 2, length = s / 2 - 2;
+                if (block.getConnector(0)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX, centerY - length - (connected[0] ? 4 : 0)); ctx.stroke(); }
+                if (block.getConnector(1)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX + length + (connected[1] ? 4 : 0), centerY); ctx.stroke(); }
+                if (block.getConnector(2)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX, centerY + length + (connected[2] ? 4 : 0)); ctx.stroke(); }
+                if (block.getConnector(3)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX - length - (connected[3] ? 4 : 0), centerY); ctx.stroke(); }
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = glowColor || (isHighlighted ? '#fff' : block.color);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, glowColor ? 7 : (isHighlighted ? 6 : 5), 0, Math.PI * 2);
+                ctx.fill();
+                if (hasFree && !isHighlighted && !glowColor) {
+                    ctx.fillStyle = '#ff6b9d';
+                    ctx.beginPath();
+                    ctx.arc(px + s - 4, py + 4, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            hasFreeConnectors(x, y) {
+                const block = this.grid[y][x];
+                if (!block) return false;
+                const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                for (const {dx, dy, dir, opposite} of directions) {
+                    if (block.getConnector(dir)) {
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return true;
+                        const neighbor = this.grid[ny][nx];
+                        if (!neighbor || !neighbor.getConnector(opposite)) return true;
+                    }
+                }
+                return false;
+            }
+            draw() {
+                this.ctx.fillStyle = 'rgba(10, 10, 20, 0.3)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i <= this.gridSize; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * this.cellSize, 0);
+                    this.ctx.lineTo(i * this.cellSize, this.canvas.height);
+                    this.ctx.stroke();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i * this.cellSize);
+                    this.ctx.lineTo(this.canvas.width, i * this.cellSize);
+                    this.ctx.stroke();
+                }
+                if (this.selectedSlot !== null && this.hoverCell.x >= 0) {
+                    const hx = this.hoverCell.x * this.cellSize, hy = this.hoverCell.y * this.cellSize;
+                    if (!this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(79, 195, 247, 0.2)';
+                        this.ctx.fillRect(hx, hy, this.cellSize, this.cellSize);
+                        const ghostBlock = this.previewBlocks[this.selectedSlot];
+                        if (ghostBlock) {
+                            this.ctx.globalAlpha = 0.5;
+                            this.drawBlock(this.ctx, ghostBlock, hx, hy, this.cellSize, false, true);
+                            this.ctx.globalAlpha = 1;
+                        }
+                    } else {
+                        this.ctx.fillStyle = 'rgba(255, 107, 157, 0.2)';
+                        this.ctx.fillRect(hx, hy, this.cellSize, this.cellSize);
+                    }
+                }
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (this.grid[y][x]) {
+                            const isHighlighted = this.lastLoopCells.has(`${x},${y}`);
+                            const glowColor = this.getGlowColor(x, y);
+                            this.drawBlock(this.ctx, this.grid[y][x], x * this.cellSize, y * this.cellSize, this.cellSize, isHighlighted, false, glowColor);
+                        }
+                    }
+                }
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= p.decay || 0.02;
+                    if (p.life > 0) {
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.shadowColor = p.color;
+                        this.ctx.shadowBlur = 10;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.shadowBlur = 0;
+                        this.ctx.globalAlpha = 1;
+                        return true;
+                    }
+                    return false;
+                });
+            }
+            animate() { this.draw(); requestAnimationFrame(() => this.animate()); }
+            updateScore() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('highScore').textContent = this.highScore;
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('circuitBlastHigh', this.highScore);
+                    document.getElementById('highScore').textContent = this.highScore;
+                }
+            }
+            gameOver() {
+                this.isGameOver = true;
+                document.getElementById('finalScore').textContent = `Счёт: ${this.score}`;
+                document.getElementById('finalLoops').textContent = `Петель: ${this.loops}`;
+                document.getElementById('gameOverScreen').classList.add('show');
+            }
+            newGame() {
+                this.isGameOver = false;
+                this.score = 0;
+                this.loops = 0;
+                this.combo = 1;
+                this.previewBlocks = [null, null, null];
+                this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
+                this.lastLoopCells.clear();
+                this.chainGlowColors.clear();
+                this.particles = [];
+                document.getElementById('gameOverScreen').classList.remove('show');
+                this.setupGrid();
+                this.placeInitialBlocks();
+                this.generateNewSet();
+                this.updateScore();
+            }
+        }
+        const game = new CircuitBlast();
+    </script>
+</body>
+</html>
