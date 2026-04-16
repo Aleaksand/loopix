@@ -65,6 +65,7 @@
             background: rgba(255, 255, 255, 0.05);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             cursor: crosshair;
+            transition: all 0.3s;
         }
         #previewPanel {
             display: flex;
@@ -74,6 +75,8 @@
             border-radius: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: all 0.3s;
         }
         .preview-slot {
             width: 70px;
@@ -103,6 +106,20 @@
             opacity: 0.3;
             border-style: dotted;
             cursor: default;
+        }
+        .preview-slot.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .preview-slot.tutorial-active {
+            animation: tutorial-pulse 1s ease-in-out infinite;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 30px rgba(79, 195, 247, 0.6);
+        }
+        @keyframes tutorial-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 40px rgba(79, 195, 247, 0.8); transform: scale(1.05); }
         }
         .preview-slot canvas {
             border-radius: 8px;
@@ -170,6 +187,7 @@
             text-align: center;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             min-width: 280px;
+            max-width: 320px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .settings-content h2 {
@@ -185,7 +203,7 @@
             font-size: 1em;
             border-radius: 16px;
             cursor: pointer;
-            margin: 8px;
+            margin: 8px 0;
             transition: all 0.3s;
             font-weight: 600;
             width: 100%;
@@ -204,6 +222,35 @@
         }
         .settings-btn.secondary:hover {
             background: rgba(255, 255, 255, 0.15);
+        }
+        .settings-btn.danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        .settings-btn.danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+        }
+        .settings-btn.warning {
+            background: linear-gradient(135deg, #ffd93d, #f9ad3e);
+            box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4);
+            color: #1a1a3e;
+        }
+        .settings-btn.warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 217, 61, 0.5);
+        }
+        .settings-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+        .settings-label {
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         #gameOverScreen {
             position: fixed;
@@ -238,6 +285,113 @@
             margin-bottom: 30px;
             opacity: 0.7;
         }
+        #comboPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            text-align: center;
+            pointer-events: none;
+            z-index: 500;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #comboPopup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        #comboPopup.hide {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+        }
+        .combo-text {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px currentColor;
+            animation: pulse 0.5s ease-in-out;
+        }
+        .combo-count {
+            font-size: 1.5em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        #tutorialOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            display: none;
+            pointer-events: none;
+        }
+        #tutorialOverlay.show {
+            display: block;
+        }
+        .tutorial-step {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            pointer-events: none;
+        }
+        .tutorial-step.active {
+            display: flex;
+        }
+        .tutorial-text {
+            background: rgba(79, 195, 247, 0.95);
+            color: #1a1a3e;
+            padding: 15px 30px;
+            border-radius: 16px;
+            font-size: 1.2em;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 4px 30px rgba(79, 195, 247, 0.5);
+            animation: float 2s ease-in-out infinite;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        #tutorialSkip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 107, 157, 0.9);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            white-space: nowrap;
+        }
+        #tutorialSkip:hover {
+            background: rgba(255, 107, 157, 1);
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 107, 157, 0.6);
+        }
+        .canvas-tutorial {
+            animation: canvas-pulse 1.5s ease-in-out infinite;
+            cursor: pointer !important;
+        }
+        @keyframes canvas-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.8); }
+        }
     </style>
 </head>
 <body>
@@ -270,11 +424,31 @@
             </div>
         </div>
     </div>
+    <div id="comboPopup">
+        <div class="combo-text" id="comboText">КРУТО!</div>
+        <div class="combo-count" id="comboCount">КОМБО x4</div>
+    </div>
+    <div id="tutorialOverlay">
+        <div class="tutorial-step" id="step1">
+            <div class="tutorial-text" onclick="game.nextTutorialStep()">Выбери блок</div>
+        </div>
+        <div class="tutorial-step" id="step2">
+            <div class="tutorial-text" onclick="game.nextTutorialStep()">Нажми ещё раз, чтобы повернуть</div>
+        </div>
+        <div class="tutorial-step" id="step3">
+            <div class="tutorial-text" onclick="game.nextTutorialStep()">Ставь на поле</div>
+        </div>
+        <button id="tutorialSkip" onclick="game.skipTutorial()">Пропустить обучение</button>
+    </div>
     <div id="settingsModal">
         <div class="settings-content">
             <h2>⚙️ Настройки</h2>
             <button class="settings-btn primary" onclick="game.newGame(); game.closeSettings()">🔄 Начать заново</button>
             <button class="settings-btn secondary" onclick="game.closeSettings()">✕ Закрыть</button>
+            <div class="settings-divider"></div>
+            <div class="settings-label">Для тестирования</div>
+            <button class="settings-btn warning" onclick="game.resetTutorial(); game.closeSettings()">📚 Показать обучение</button>
+            <button class="settings-btn danger" onclick="game.resetAllData(); game.closeSettings()">🗑️ Сбросить все данные</button>
         </div>
     </div>
     <div id="gameOverScreen">
@@ -299,13 +473,49 @@
                 legendary: ['#ff1744', '#f50057', '#d500f9']
             }
         };
+        
+        const COMBO_PHRASES = [
+            'КРУТО!',
+            'ОТЛИЧНО!',
+            'СУПЕР!',
+            'ВАУ!',
+            'БОМБА!',
+            'КЛАСС!',
+            'МОЛОДЕЦ!',
+            'ИМБА!',
+            'ОГОНЬ!',
+            'ТОП!',
+            'ПЕРФЕКТО!',
+            'ГЕНИАЛЬНО!',
+            'ШИКАРНО!',
+            'ЗВЕРСКИ!',
+            'ЛЕГЕНДАРНО!'
+        ];
+        
+        const COMBO_COLORS = [
+            '#4fc3f7',
+            '#69f0ae',
+            '#ffd54f',
+            '#ff8a65',
+            '#ff6b9d',
+            '#e040fb',
+            '#7c4dff'
+        ];
+        
         const BLOCK_TYPES = {
             EMPTY: { connectors: [0,0,0,0], color: '#2c3e50' },
-            STRAIGHT: { variants: [{ connectors: [1,0,1,0] },{ connectors: [0,1,0,1] }] },
-            CORNER: { variants: [{ connectors: [1,1,0,0] },{ connectors: [0,1,1,0] },{ connectors: [0,0,1,1] },{ connectors: [1,0,0,1] }] },
-            T_SHAPE: { variants: [{ connectors: [1,1,1,0] },{ connectors: [0,1,1,1] },{ connectors: [1,0,1,1] },{ connectors: [1,1,0,1] }] },
-            CROSS: { connectors: [1,1,1,1] }
+            STRAIGHT: { connectors: 2, variants: [{ connectors: [1,0,1,0] },{ connectors: [0,1,0,1] }] },
+            CORNER: { connectors: 2, variants: [{ connectors: [1,1,0,0] },{ connectors: [0,1,1,0] },{ connectors: [0,0,1,1] },{ connectors: [1,0,0,1] }] },
+            T_SHAPE: { connectors: 3, variants: [{ connectors: [1,1,1,0] },{ connectors: [0,1,1,1] },{ connectors: [1,0,1,1] },{ connectors: [1,1,0,1] }] },
+            CROSS: { connectors: 4, connectors: [1,1,1,1] }
         };
+        
+        const DIFFICULTY_LEVELS = {
+            0: { name: 'Лёгкий', maxConnectors: 2 },
+            1: { name: 'Средний', maxConnectors: 3 },
+            2: { name: 'Сложный', maxConnectors: 4 }
+        };
+        
         class Block {
             constructor(type, variant = 0) {
                 this.type = type;
@@ -335,6 +545,7 @@
             getConnector(direction) { return this.connectors[direction]; }
             getConnectorCount() { return this.connectors.filter(c => c).length; }
         }
+        
         class CircuitBlast {
             constructor() {
                 this.canvas = document.getElementById('mainCanvas');
@@ -353,16 +564,134 @@
                 this.particles = [];
                 this.lastLoopCells = new Set();
                 this.chainGlowColors = new Map();
+                this.tutorialStep = 0;
+                this.tutorialActive = false;
+                this.difficultyLevel = 0;
                 this.init();
             }
+            
             init() {
                 this.updateScore();
                 this.setupGrid();
                 this.placeInitialBlocks();
                 this.generateNewSet();
                 this.setupEvents();
+                this.checkTutorial();
                 this.animate();
             }
+            
+            checkTutorial() {
+                const hasSeenTutorial = localStorage.getItem('circuitBlastTutorial');
+                if (!hasSeenTutorial) {
+                    this.startTutorial();
+                }
+            }
+            
+            startTutorial() {
+                this.tutorialActive = true;
+                this.tutorialStep = 1;
+                document.getElementById('tutorialOverlay').classList.add('show');
+                this.updateTutorialStep();
+            }
+            
+            updateTutorialStep() {
+                document.querySelectorAll('.tutorial-step').forEach(el => el.classList.remove('active'));
+                document.getElementById('step' + this.tutorialStep).classList.add('active');
+                
+                const panel = document.getElementById('previewPanel');
+                const canvas = document.getElementById('mainCanvas');
+                const slots = document.querySelectorAll('.preview-slot');
+                
+                slots.forEach(slot => {
+                    slot.classList.remove('tutorial-active', 'disabled');
+                    slot.style.pointerEvents = 'none';
+                });
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = 'none';
+                
+                if (this.tutorialStep === 1) {
+                    const step1 = document.getElementById('step1');
+                    const rect = panel.getBoundingClientRect();
+                    step1.style.top = rect.top - 80 + 'px';
+                    step1.style.left = rect.left + rect.width / 2 + 'px';
+                    step1.style.transform = 'translateX(-50%)';
+                    
+                    slots.forEach(slot => slot.classList.add('tutorial-active'));
+                    panel.style.pointerEvents = 'auto';
+                    slots.forEach(slot => slot.style.pointerEvents = 'auto');
+                } else if (this.tutorialStep === 2) {
+                    const step2 = document.getElementById('step2');
+                    const slot0 = document.getElementById('slot0');
+                    const rect = slot0.getBoundingClientRect();
+                    step2.style.top = rect.top - 80 + 'px';
+                    step2.style.left = rect.left + rect.width / 2 + 'px';
+                    step2.style.transform = 'translateX(-50%)';
+                    
+                    slots.forEach((slot, index) => {
+                        if (index !== 0) slot.classList.add('disabled');
+                    });
+                    slot0.classList.add('tutorial-active');
+                    slot0.style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 3) {
+                    const step3 = document.getElementById('step3');
+                    const rect = canvas.getBoundingClientRect();
+                    step3.style.top = rect.top - 80 + 'px';
+                    step3.style.left = rect.left + rect.width / 2 + 'px';
+                    step3.style.transform = 'translateX(-50%)';
+                    
+                    slots.forEach(slot => slot.classList.add('disabled'));
+                    canvas.classList.add('canvas-tutorial');
+                    canvas.style.pointerEvents = 'auto';
+                }
+            }
+            
+            nextTutorialStep() {
+                this.tutorialStep++;
+                if (this.tutorialStep > 3) {
+                    this.endTutorial();
+                } else {
+                    this.updateTutorialStep();
+                }
+            }
+            
+            endTutorial() {
+                this.tutorialActive = false;
+                document.getElementById('tutorialOverlay').classList.remove('show');
+                localStorage.setItem('circuitBlastTutorial', 'true');
+                
+                const slots = document.querySelectorAll('.preview-slot');
+                const canvas = document.getElementById('mainCanvas');
+                const panel = document.getElementById('previewPanel');
+                
+                slots.forEach(slot => {
+                    slot.classList.remove('tutorial-active', 'disabled');
+                    slot.style.pointerEvents = '';
+                });
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = '';
+                panel.style.pointerEvents = '';
+            }
+            
+            skipTutorial() {
+                this.endTutorial();
+            }
+            
+            resetTutorial() {
+                localStorage.removeItem('circuitBlastTutorial');
+                this.newGame();
+                setTimeout(() => {
+                    this.startTutorial();
+                }, 100);
+            }
+            
+            resetAllData() {
+                localStorage.removeItem('circuitBlastHigh');
+                localStorage.removeItem('circuitBlastTutorial');
+                this.highScore = 0;
+                this.newGame();
+                this.updateScore();
+            }
+            
             placeInitialBlocks() {
                 const innerPositions = [];
                 for (let y = 1; y < this.gridSize - 1; y++) {
@@ -383,8 +712,10 @@
                     this.grid[pos.y][pos.x] = block;
                 }
             }
+            
             openSettings() { document.getElementById('settingsModal').classList.add('show'); }
             closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+            
             setupGrid() {
                 this.grid = [];
                 for (let y = 0; y < this.gridSize; y++) {
@@ -393,6 +724,7 @@
                     this.grid.push(row);
                 }
             }
+            
             generateNewSet() {
                 for (let i = 0; i < 3; i++) this.previewBlocks[i] = this.randomBlock();
                 this.selectedSlot = null;
@@ -400,6 +732,7 @@
                 this.renderPreviews();
                 if (!this.canPlaceAny()) this.gameOver();
             }
+            
             updateSlotClasses() {
                 for (let i = 0; i < 3; i++) {
                     const slot = document.getElementById(`slot${i}`);
@@ -411,26 +744,59 @@
                     }
                 }
             }
+            
+            getAvailableBlockTypes() {
+                const maxConnectors = DIFFICULTY_LEVELS[this.difficultyLevel].maxConnectors;
+                const available = [];
+                
+                for (const [type, data] of Object.entries(BLOCK_TYPES)) {
+                    if (type === 'EMPTY') continue;
+                    if (data.connectors <= maxConnectors) {
+                        available.push(type);
+                    }
+                }
+                
+                return available;
+            }
+            
             randomBlock() {
-                const types = ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'];
-                const weights = [2, 3, 2, 1];
-                const total = weights.reduce((a, b) => a + b, 0);
-                let random = Math.random() * total;
-                for (let i = 0; i < types.length; i++) {
-                    random -= weights[i];
+                const availableTypes = this.getAvailableBlockTypes();
+                
+                const weights = {
+                    'STRAIGHT': 2,
+                    'CORNER': 3,
+                    'T_SHAPE': 2,
+                    'CROSS': 1
+                };
+                
+                let totalWeight = 0;
+                availableTypes.forEach(type => {
+                    totalWeight += weights[type] || 1;
+                });
+                
+                let random = Math.random() * totalWeight;
+                
+                for (const type of availableTypes) {
+                    random -= weights[type] || 1;
                     if (random <= 0) {
-                        const type = types[i];
                         let variant = 0;
-                        if (BLOCK_TYPES[type].variants) variant = Math.floor(Math.random() * BLOCK_TYPES[type].variants.length);
+                        if (BLOCK_TYPES[type].variants) {
+                            variant = Math.floor(Math.random() * BLOCK_TYPES[type].variants.length);
+                        }
                         return new Block(type, variant);
                     }
                 }
+                
                 return new Block('STRAIGHT', 0);
             }
+            
             setupEvents() {
                 for (let i = 0; i < 3; i++) {
                     const slot = document.getElementById(`slot${i}`);
-                    slot.addEventListener('click', (e) => { e.stopPropagation(); this.onSlotClick(i); });
+                    slot.addEventListener('click', (e) => { 
+                        e.stopPropagation(); 
+                        this.onSlotClick(i); 
+                    });
                 }
                 this.canvas.addEventListener('mousemove', (e) => this.onCanvasMove(e));
                 this.canvas.addEventListener('mouseleave', () => this.onCanvasLeave());
@@ -438,14 +804,36 @@
                 this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); this.onCanvasMove(e.touches[0]); });
                 this.canvas.addEventListener('touchend', (e) => { e.preventDefault(); this.onCanvasClick(e.changedTouches[0]); });
             }
+            
             onSlotClick(slotIndex) {
                 if (this.isGameOver) return;
                 if (this.previewBlocks[slotIndex] === null) return;
-                if (this.selectedSlot === slotIndex) this.previewBlocks[slotIndex].rotate();
-                else this.selectedSlot = slotIndex;
+                
+                if (this.tutorialActive) {
+                    if (this.tutorialStep === 1) {
+                        this.selectedSlot = slotIndex;
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                        return;
+                    } else if (this.tutorialStep === 2 && slotIndex === 0) {
+                        this.previewBlocks[slotIndex].rotate();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                        return;
+                    }
+                    return;
+                }
+                
+                if (this.selectedSlot === slotIndex) {
+                    this.previewBlocks[slotIndex].rotate();
+                } else {
+                    this.selectedSlot = slotIndex;
+                }
                 this.updateSlotClasses();
                 this.renderPreviews();
             }
+            
             onCanvasMove(e) {
                 if (this.isGameOver) return;
                 if (this.selectedSlot === null) return;
@@ -454,10 +842,15 @@
                 const y = e.clientY - rect.top;
                 const gridX = Math.floor(x / this.cellSize);
                 const gridY = Math.floor(y / this.cellSize);
-                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize) this.hoverCell = { x: gridX, y: gridY };
-                else this.hoverCell = { x: -1, y: -1 };
+                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize) {
+                    this.hoverCell = { x: gridX, y: gridY };
+                } else {
+                    this.hoverCell = { x: -1, y: -1 };
+                }
             }
+            
             onCanvasLeave() { this.hoverCell = { x: -1, y: -1 }; }
+            
             onCanvasClick(e) {
                 if (this.isGameOver) return;
                 if (this.selectedSlot === null) return;
@@ -470,41 +863,101 @@
                     this.placeBlock(gridX, gridY, this.selectedSlot);
                 }
             }
+            
             placeBlock(x, y, slotIndex) {
                 const block = this.previewBlocks[slotIndex];
                 this.grid[y][x] = block;
                 this.previewBlocks[slotIndex] = null;
                 this.selectedSlot = null;
+                
+                if (this.tutorialActive && this.tutorialStep === 3) {
+                    this.nextTutorialStep();
+                }
+                
                 const loops = this.findLoops();
                 if (loops.length > 0) {
                     this.combo = loops.length;
                     this.assignGlowColors(loops);
+                    this.showComboPopup(loops);
                     this.clearLoops(loops);
-                } else this.combo = 1;
+                    this.increaseDifficulty();
+                } else {
+                    this.combo = 1;
+                }
+                
                 const remaining = this.previewBlocks.filter(b => b !== null).length;
-                if (remaining === 0) setTimeout(() => this.generateNewSet(), 400);
-                else if (!this.canPlaceRemaining()) this.gameOver();
+                if (remaining === 0) {
+                    setTimeout(() => this.generateNewSet(), 400);
+                } else if (!this.canPlaceRemaining()) {
+                    this.gameOver();
+                }
+                
                 this.updateSlotClasses();
                 this.renderPreviews();
                 this.updateScore();
             }
+            
+            increaseDifficulty() {
+                if (this.difficultyLevel < 2) {
+                    this.difficultyLevel++;
+                }
+            }
+            
+            showComboPopup(loops) {
+                const popup = document.getElementById('comboPopup');
+                const textEl = document.getElementById('comboText');
+                const countEl = document.getElementById('comboCount');
+                
+                const totalCells = loops.reduce((sum, loop) => sum + loop.size, 0);
+                const phrase = COMBO_PHRASES[Math.floor(Math.random() * COMBO_PHRASES.length)];
+                const color = COMBO_COLORS[Math.floor(Math.random() * COMBO_COLORS.length)];
+                
+                textEl.textContent = phrase;
+                textEl.style.color = color;
+                countEl.textContent = `КОМБО x${totalCells}`;
+                countEl.style.color = color;
+                
+                popup.classList.remove('hide');
+                popup.classList.add('show');
+                
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    popup.classList.add('hide');
+                }, 1500);
+            }
+            
             canPlaceAny() {
-                for (let y = 0; y < this.gridSize; y++) for (let x = 0; x < this.gridSize; x++) if (!this.grid[y][x]) return true;
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (!this.grid[y][x]) return true;
+                    }
+                }
                 return false;
             }
+            
             canPlaceRemaining() {
                 let freeCells = 0;
-                for (let y = 0; y < this.gridSize; y++) for (let x = 0; x < this.gridSize; x++) if (!this.grid[y][x]) freeCells++;
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (!this.grid[y][x]) freeCells++;
+                    }
+                }
                 const remainingBlocks = this.previewBlocks.filter(b => b !== null).length;
                 return freeCells >= remainingBlocks;
             }
+            
             isClosedLoop(component) {
                 if (component.size < 2) return false;
                 for (const cellKey of component) {
                     const [cx, cy] = cellKey.split(',').map(Number);
                     const block = this.grid[cy][cx];
                     if (!block) continue;
-                    const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                    const directions = [
+                        {dx: 0, dy: -1, dir: 0, opposite: 2},
+                        {dx: 1, dy: 0, dir: 1, opposite: 3},
+                        {dx: 0, dy: 1, dir: 2, opposite: 0},
+                        {dx: -1, dy: 0, dir: 3, opposite: 1}
+                    ];
                     for (const {dx, dy, dir, opposite} of directions) {
                         if (block.getConnector(dir)) {
                             const nx = cx + dx, ny = cy + dy;
@@ -517,6 +970,7 @@
                 }
                 return true;
             }
+            
             findLoops() {
                 const loops = [];
                 const processed = new Set();
@@ -531,6 +985,7 @@
                 }
                 return loops;
             }
+            
             findConnectedComponent(startX, startY) {
                 const component = new Set();
                 const queue = [{x: startX, y: startY}];
@@ -540,7 +995,12 @@
                     const block = this.grid[y][x];
                     if (!block) continue;
                     component.add(`${x},${y}`);
-                    const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                    const directions = [
+                        {dx: 0, dy: -1, dir: 0, opposite: 2},
+                        {dx: 1, dy: 0, dir: 1, opposite: 3},
+                        {dx: 0, dy: 1, dir: 2, opposite: 0},
+                        {dx: -1, dy: 0, dir: 3, opposite: 1}
+                    ];
                     for (const {dx, dy, dir, opposite} of directions) {
                         if (!block.getConnector(dir)) continue;
                         const nx = x + dx, ny = y + dy;
@@ -556,6 +1016,7 @@
                 }
                 return component;
             }
+            
             assignGlowColors(loops) {
                 this.chainGlowColors.clear();
                 const colors = COLORS.chainColors;
@@ -572,6 +1033,7 @@
                     loop.forEach(key => this.chainGlowColors.set(key, glowColor));
                 });
             }
+            
             clearLoops(loops) {
                 let totalCells = 0;
                 this.lastLoopCells.clear();
@@ -590,8 +1052,12 @@
                 this.score += points;
                 this.loops += loops.length;
                 this.updateScore();
-                setTimeout(() => { this.lastLoopCells.clear(); this.chainGlowColors.clear(); }, 600);
+                setTimeout(() => {
+                    this.lastLoopCells.clear();
+                    this.chainGlowColors.clear();
+                }, 600);
             }
+            
             createExplosion(gridX, gridY, color) {
                 const x = gridX * this.cellSize + this.cellSize / 2;
                 const y = gridY * this.cellSize + this.cellSize / 2;
@@ -599,22 +1065,39 @@
                 for (let i = 0; i < particleCount; i++) {
                     const angle = (Math.PI * 2 * i) / particleCount;
                     const speed = 3 + Math.random() * 5;
-                    this.particles.push({x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 1, color: color, size: 3 + Math.random() * 4, decay: 0.01 + Math.random() * 0.02});
+                    this.particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        color: color,
+                        size: 3 + Math.random() * 4,
+                        decay: 0.01 + Math.random() * 0.02
+                    });
                 }
             }
+            
             renderPreviews() {
                 for (let i = 0; i < 3; i++) {
                     const canvas = document.getElementById(`preview${i}`);
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, 50, 50);
-                    if (this.previewBlocks[i] !== null) this.drawBlock(ctx, this.previewBlocks[i], 0, 0, 50, false, true);
+                    if (this.previewBlocks[i] !== null) {
+                        this.drawBlock(ctx, this.previewBlocks[i], 0, 0, 50, false, true);
+                    }
                 }
             }
+            
             hasConnection(x, y, direction) {
                 const block = this.grid[y]?.[x];
                 if (!block) return false;
                 if (!block.getConnector(direction)) return false;
-                const directions = [{dx: 0, dy: -1, opposite: 2},{dx: 1, dy: 0, opposite: 3},{dx: 0, dy: 1, opposite: 0},{dx: -1, dy: 0, opposite: 1}];
+                const directions = [
+                    {dx: 0, dy: -1, opposite: 2},
+                    {dx: 1, dy: 0, opposite: 3},
+                    {dx: 0, dy: 1, opposite: 0},
+                    {dx: -1, dy: 0, opposite: 1}
+                ];
                 const dir = directions[direction];
                 const nx = x + dir.dx, ny = y + dir.dy;
                 if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return false;
@@ -622,45 +1105,127 @@
                 if (!neighbor) return false;
                 return neighbor.getConnector(dir.opposite);
             }
+            
             getGlowColor(x, y) {
                 const key = `${x},${y}`;
-                if (this.lastLoopCells.has(key)) return this.chainGlowColors.get(key) || '#fff';
+                if (this.lastLoopCells.has(key)) {
+                    return this.chainGlowColors.get(key) || '#fff';
+                }
                 return null;
             }
+            
             drawBlock(ctx, block, x, y, size, isHighlighted = false, isPreview = false, glowColor = null) {
-                const padding = 2, s = size - padding * 2, px = x + padding, py = y + padding;
-                const gridX = Math.floor(x / this.cellSize), gridY = Math.floor(y / this.cellSize);
-                const connected = isPreview ? [false, false, false, false] : [this.hasConnection(gridX, gridY, 0),this.hasConnection(gridX, gridY, 1),this.hasConnection(gridX, gridY, 2),this.hasConnection(gridX, gridY, 3)];
+                const padding = 2;
+                const s = size - padding * 2;
+                const px = x + padding;
+                const py = y + padding;
+                const gridX = Math.floor(x / this.cellSize);
+                const gridY = Math.floor(y / this.cellSize);
+                
+                const connected = isPreview ? [false, false, false, false] : [
+                    this.hasConnection(gridX, gridY, 0),
+                    this.hasConnection(gridX, gridY, 1),
+                    this.hasConnection(gridX, gridY, 2),
+                    this.hasConnection(gridX, gridY, 3)
+                ];
+                
                 let hasFree = false;
-                if (!isPreview && this.grid[gridY][gridX]) hasFree = this.hasFreeConnectors(gridX, gridY);
-                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 20; } else ctx.shadowBlur = 0;
-                if (isHighlighted) ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                else if (glowColor) ctx.fillStyle = glowColor + '33';
-                else if (hasFree) ctx.fillStyle = 'rgba(255, 107, 157, 0.15)';
-                else ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                if (!isPreview && this.grid[gridY][gridX]) {
+                    hasFree = this.hasFreeConnectors(gridX, gridY);
+                }
+                
+                if (glowColor && !isPreview) {
+                    ctx.shadowColor = glowColor;
+                    ctx.shadowBlur = 20;
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+                
+                if (isHighlighted) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                } else if (glowColor) {
+                    ctx.fillStyle = glowColor + '33';
+                } else if (hasFree) {
+                    ctx.fillStyle = 'rgba(255, 107, 157, 0.15)';
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                }
                 ctx.fillRect(px, py, s, s);
+                
                 ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : (hasFree ? '#ff6b9d' : block.color));
                 ctx.lineWidth = glowColor ? 3 : (isHighlighted ? 3 : 2);
                 ctx.lineCap = 'square';
                 ctx.shadowBlur = 0;
-                if (!connected[0]) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + s, py); ctx.stroke(); }
-                if (!connected[1]) { ctx.beginPath(); ctx.moveTo(px + s, py); ctx.lineTo(px + s, py + s); ctx.stroke(); }
-                if (!connected[2]) { ctx.beginPath(); ctx.moveTo(px + s, py + s); ctx.lineTo(px, py + s); ctx.stroke(); }
-                if (!connected[3]) { ctx.beginPath(); ctx.moveTo(px, py + s); ctx.lineTo(px, py); ctx.stroke(); }
+                
+                if (!connected[0]) {
+                    ctx.beginPath();
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(px + s, py);
+                    ctx.stroke();
+                }
+                if (!connected[1]) {
+                    ctx.beginPath();
+                    ctx.moveTo(px + s, py);
+                    ctx.lineTo(px + s, py + s);
+                    ctx.stroke();
+                }
+                if (!connected[2]) {
+                    ctx.beginPath();
+                    ctx.moveTo(px + s, py + s);
+                    ctx.lineTo(px, py + s);
+                    ctx.stroke();
+                }
+                if (!connected[3]) {
+                    ctx.beginPath();
+                    ctx.moveTo(px, py + s);
+                    ctx.lineTo(px, py);
+                    ctx.stroke();
+                }
+                
                 ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : block.color);
                 ctx.lineWidth = glowColor ? 5 : (isHighlighted ? 5 : 4);
                 ctx.lineCap = 'round';
-                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10; }
-                const centerX = x + size / 2, centerY = y + size / 2, length = s / 2 - 2;
-                if (block.getConnector(0)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX, centerY - length - (connected[0] ? 4 : 0)); ctx.stroke(); }
-                if (block.getConnector(1)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX + length + (connected[1] ? 4 : 0), centerY); ctx.stroke(); }
-                if (block.getConnector(2)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX, centerY + length + (connected[2] ? 4 : 0)); ctx.stroke(); }
-                if (block.getConnector(3)) { ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX - length - (connected[3] ? 4 : 0), centerY); ctx.stroke(); }
+                
+                if (glowColor && !isPreview) {
+                    ctx.shadowColor = glowColor;
+                    ctx.shadowBlur = 10;
+                }
+                
+                const centerX = x + size / 2;
+                const centerY = y + size / 2;
+                const length = s / 2 - 2;
+                
+                if (block.getConnector(0)) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX, centerY - length - (connected[0] ? 4 : 0));
+                    ctx.stroke();
+                }
+                if (block.getConnector(1)) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX + length + (connected[1] ? 4 : 0), centerY);
+                    ctx.stroke();
+                }
+                if (block.getConnector(2)) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX, centerY + length + (connected[2] ? 4 : 0));
+                    ctx.stroke();
+                }
+                if (block.getConnector(3)) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX - length - (connected[3] ? 4 : 0), centerY);
+                    ctx.stroke();
+                }
+                
                 ctx.shadowBlur = 0;
                 ctx.fillStyle = glowColor || (isHighlighted ? '#fff' : block.color);
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, glowColor ? 7 : (isHighlighted ? 6 : 5), 0, Math.PI * 2);
                 ctx.fill();
+                
                 if (hasFree && !isHighlighted && !glowColor) {
                     ctx.fillStyle = '#ff6b9d';
                     ctx.beginPath();
@@ -668,10 +1233,16 @@
                     ctx.fill();
                 }
             }
+            
             hasFreeConnectors(x, y) {
                 const block = this.grid[y][x];
                 if (!block) return false;
-                const directions = [{dx: 0, dy: -1, dir: 0, opposite: 2},{dx: 1, dy: 0, dir: 1, opposite: 3},{dx: 0, dy: 1, dir: 2, opposite: 0},{dx: -1, dy: 0, dir: 3, opposite: 1}];
+                const directions = [
+                    {dx: 0, dy: -1, dir: 0, opposite: 2},
+                    {dx: 1, dy: 0, dir: 1, opposite: 3},
+                    {dx: 0, dy: 1, dir: 2, opposite: 0},
+                    {dx: -1, dy: 0, dir: 3, opposite: 1}
+                ];
                 for (const {dx, dy, dir, opposite} of directions) {
                     if (block.getConnector(dir)) {
                         const nx = x + dx, ny = y + dy;
@@ -682,9 +1253,11 @@
                 }
                 return false;
             }
+            
             draw() {
                 this.ctx.fillStyle = 'rgba(10, 10, 20, 0.3)';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
                 this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
                 this.ctx.lineWidth = 1;
                 for (let i = 0; i <= this.gridSize; i++) {
@@ -697,8 +1270,10 @@
                     this.ctx.lineTo(this.canvas.width, i * this.cellSize);
                     this.ctx.stroke();
                 }
+                
                 if (this.selectedSlot !== null && this.hoverCell.x >= 0) {
-                    const hx = this.hoverCell.x * this.cellSize, hy = this.hoverCell.y * this.cellSize;
+                    const hx = this.hoverCell.x * this.cellSize;
+                    const hy = this.hoverCell.y * this.cellSize;
                     if (!this.grid[this.hoverCell.y][this.hoverCell.x]) {
                         this.ctx.fillStyle = 'rgba(79, 195, 247, 0.2)';
                         this.ctx.fillRect(hx, hy, this.cellSize, this.cellSize);
@@ -713,6 +1288,7 @@
                         this.ctx.fillRect(hx, hy, this.cellSize, this.cellSize);
                     }
                 }
+                
                 for (let y = 0; y < this.gridSize; y++) {
                     for (let x = 0; x < this.gridSize; x++) {
                         if (this.grid[y][x]) {
@@ -722,8 +1298,12 @@
                         }
                     }
                 }
+                
                 this.particles = this.particles.filter(p => {
-                    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= p.decay || 0.02;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.15;
+                    p.life -= p.decay || 0.02;
                     if (p.life > 0) {
                         this.ctx.globalAlpha = p.life;
                         this.ctx.fillStyle = p.color;
@@ -739,7 +1319,12 @@
                     return false;
                 });
             }
-            animate() { this.draw(); requestAnimationFrame(() => this.animate()); }
+            
+            animate() {
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+            
             updateScore() {
                 document.getElementById('score').textContent = this.score;
                 document.getElementById('highScore').textContent = this.highScore;
@@ -749,17 +1334,20 @@
                     document.getElementById('highScore').textContent = this.highScore;
                 }
             }
+            
             gameOver() {
                 this.isGameOver = true;
                 document.getElementById('finalScore').textContent = `Счёт: ${this.score}`;
                 document.getElementById('finalLoops').textContent = `Петель: ${this.loops}`;
                 document.getElementById('gameOverScreen').classList.add('show');
             }
+            
             newGame() {
                 this.isGameOver = false;
                 this.score = 0;
                 this.loops = 0;
                 this.combo = 1;
+                this.difficultyLevel = 0;
                 this.previewBlocks = [null, null, null];
                 this.selectedSlot = null;
                 this.hoverCell = { x: -1, y: -1 };
@@ -773,6 +1361,7 @@
                 this.updateScore();
             }
         }
+        
         const game = new CircuitBlast();
     </script>
 </body>
