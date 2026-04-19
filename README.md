@@ -13,8 +13,7 @@
 - Cordova для Android сборки
 
 ## 👤 Разработчик
-**tsevan**
-- GitHub: [github.com/Aleaksand/loopix]
+**Aleaksand**
 
 ## 📦 Сборка
 ```bash
