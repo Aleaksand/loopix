@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>Loopix</title>
-    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { 
@@ -199,6 +198,178 @@
             border-color: #4fc3f7;
             box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
         }
+        .bonus-buttons {
+            position: fixed;
+            top: max(20px, env(safe-area-inset-top, 20px));
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+        .bonus-left {
+            left: max(20px, env(safe-area-inset-left, 20px));
+        }
+        .bonus-right {
+            right: max(20px, env(safe-area-inset-right, 20px));
+        }
+        .bonus-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        #hammerBtn {
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+        }
+        #magicBtn {
+            background: linear-gradient(135deg, #e040fb, #7c4dff);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(224, 64, 251, 0.4);
+        }
+        .bonus-btn .ad-label {
+            font-size: 8px;
+            font-weight: bold;
+            margin-top: -2px;
+            letter-spacing: 0.5px;
+        }
+        #hammerBtn .ad-label {
+            color: #1a1a3e;
+        }
+        #magicBtn .ad-label {
+            color: #1a1a3e;
+        }
+        .bonus-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+        .bonus-btn.disabled .ad-label {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .bonus-btn:hover:not(.disabled) {
+            transform: scale(1.1);
+        }
+        .bonus-btn:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        #hammerIndicator, #magicIndicator {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        #hammerIndicator.show {
+            opacity: 1;
+            background: rgba(255, 213, 79, 0.9);
+            color: #1a1a3e;
+            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+        }
+        #magicIndicator.show {
+            opacity: 1;
+            background: rgba(224, 64, 251, 0.9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(224, 64, 251, 0.4);
+        }
+        #magicBlockModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            backdrop-filter: blur(8px);
+        }
+        #magicBlockModal.show {
+            display: flex;
+        }
+        .magic-block-panel {
+            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+            max-width: 90vw;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .magic-block-panel h3 {
+            margin-bottom: 20px;
+            color: #e040fb;
+            font-size: 1.3em;
+        }
+        .magic-blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .magic-block-option {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .magic-block-option:hover {
+            transform: scale(1.05);
+            border-color: #e040fb;
+            background: rgba(224, 64, 251, 0.2);
+        }
+        .magic-block-option canvas {
+            border-radius: 8px;
+        }
+        .magic-close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        .magic-mode {
+            cursor: pointer !important;
+        }
+        .magic-target {
+            animation: magic-pulse 0.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(224, 64, 251, 0.8) !important;
+        }
+        @keyframes magic-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
         #settingsBtn {
             position: fixed;
             top: max(20px, env(safe-area-inset-top, 20px));
@@ -227,73 +398,11 @@
         #settingsBtn:active {
             background: rgba(255, 255, 255, 0.3);
         }
-        #hammerBtn {
-            position: fixed;
-            top: max(20px, env(safe-area-inset-top, 20px));
+        .bonus-left {
             left: max(20px, env(safe-area-inset-left, 20px));
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #ffd54f, #ff8a65);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: all 0.3s;
-            z-index: 100;
-            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
-        #hammerBtn:hover:not(.disabled) {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 213, 79, 0.6);
-        }
-        #hammerBtn:active:not(.disabled) {
-            transform: scale(0.95);
-        }
-        #hammerBtn.disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: none;
-        }
-        #hammerBtn .ad-label {
-            font-size: 8px;
-            font-weight: bold;
-            color: #1a1a3e;
-            margin-top: -2px;
-            letter-spacing: 0.5px;
-        }
-        #hammerBtn.disabled .ad-label {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        #hammerIndicator {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 213, 79, 0.9);
-            color: #1a1a3e;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
-            pointer-events: none;
-            z-index: 150;
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
-        }
-        #hammerIndicator.show {
-            opacity: 1;
+        .bonus-right {
+            right: max(20px, env(safe-area-inset-right, 20px));
         }
         #settingsModal, #gameOverModal, #adModal, #rescueModal, #shareModal {
             position: fixed;
@@ -641,10 +750,6 @@
             animation: hammer-pulse 0.5s ease-in-out infinite;
             box-shadow: 0 0 20px rgba(255, 213, 79, 0.8) !important;
         }
-        @keyframes hammer-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
         .ad-timer {
             font-size: 2em;
             color: #4fc3f7;
@@ -748,12 +853,19 @@
 </head>
 <body>
     <h1>LOOPIX</h1>
-    <div id="settingsBtn">⚙️</div>
-    <div id="hammerBtn" title="Удалить блок (смотреть рекламу)">
-        🔨
-        <span class="ad-label">AD</span>
+    <div class="bonus-buttons bonus-left">
+        <div id="hammerBtn" class="bonus-btn" title="Удалить блок (смотреть рекламу)">
+            🔨
+            <span class="ad-label">AD</span>
+        </div>
+        <div id="magicBtn" class="bonus-btn" title="Волшебный блок (смотреть рекламу)">
+            ✨
+            <span class="ad-label">AD</span>
+        </div>
     </div>
+    <div id="settingsBtn">⚙️</div>
     <div id="hammerIndicator">🔨 Выбери блок для удаления</div>
+    <div id="magicIndicator">✨ Выбери место для магического блока</div>
     <div id="gameContainer">
         <div id="scoreBoard">
             <div class="score-item">
@@ -783,6 +895,14 @@
             <div class="preview-slot has-block" id="slot2" data-index="2">
                 <canvas id="preview2" width="50" height="50"></canvas>
             </div>
+        </div>
+    </div>
+    
+    <div id="magicBlockModal">
+        <div class="magic-block-panel">
+            <h3>✨ Выбери волшебный блок ✨</h3>
+            <div class="magic-blocks-grid" id="magicBlocksGrid"></div>
+            <button class="magic-close-btn" id="closeMagicBtn">Отмена</button>
         </div>
     </div>
     
@@ -841,14 +961,14 @@
                 <button class="modal-btn secondary" id="closeSettingsBtn" data-i18n="close">Закрыть</button>
             </div>
             
-            <div class="modal-footer">Loopix v0.9</div>
+            <div class="modal-footer">Loopix v1.0</div>
         </div>
     </div>
     
     <div id="adModal">
         <div class="modal-content">
             <h3 data-i18n="adTitle">🔨 Реклама</h3>
-            <p data-i18n="adText">Просмотрите рекламу, чтобы удалить один блок</p>
+            <p data-i18n="adText">Просмотрите рекламу, чтобы получить бонус</p>
             <div class="ad-timer" id="adTimer">5</div>
             <button class="modal-btn secondary" id="cancelAdBtn" data-i18n="cancel">Отмена</button>
         </div>
@@ -891,7 +1011,6 @@
     <div id="yandexBanner" data-i18n="adBanner">Рекламный баннер</div>
     
     <script>
-        // Определение языка системы
         function detectSystemLanguage() {
             const navLang = navigator.language || navigator.userLanguage || 'ru';
             const lang = navLang.toLowerCase().split('-')[0];
@@ -899,7 +1018,6 @@
             return supportedLangs.includes(lang) ? lang : 'ru';
         }
         
-        // Система локализации
         const I18N = {
             currentLang: localStorage.getItem('loopixLang') || detectSystemLanguage(),
             
@@ -936,8 +1054,8 @@
                     vibration: 'Вибрация',
                     newGame: 'Начать заново',
                     close: 'Закрыть',
-                    adTitle: '🔨 Реклама',
-                    adText: 'Просмотрите рекламу, чтобы удалить один блок',
+                    adTitle: '🎁 Реклама',
+                    adText: 'Просмотрите рекламу, чтобы получить бонус',
                     cancel: 'Отмена',
                     lastChance: 'Последний шанс',
                     noMoves: 'Нет ходов. Смотреть рекламу и использовать молоток?',
@@ -949,7 +1067,9 @@
                     share: '📤 Поделиться',
                     adBanner: 'Рекламный баннер',
                     hammerHint: 'Удалить блок (смотреть рекламу)',
+                    magicHint: 'Волшебный блок (смотреть рекламу)',
                     hammerIndicator: '🔨 Выбери блок для удаления',
+                    magicIndicator: '✨ Выбери место для магического блока',
                     finalScore: 'Счёт:',
                     finalLoops: 'Петель:',
                     points: 'очков',
@@ -989,8 +1109,8 @@
                     vibration: 'Vibration',
                     newGame: 'New Game',
                     close: 'Close',
-                    adTitle: '🔨 Ad',
-                    adText: 'Watch an ad to remove one block',
+                    adTitle: '🎁 Ad',
+                    adText: 'Watch an ad to get a bonus',
                     cancel: 'Cancel',
                     lastChance: 'Last Chance',
                     noMoves: 'No moves left. Watch ad to use hammer?',
@@ -1002,7 +1122,9 @@
                     share: '📤 Share',
                     adBanner: 'Advertisement',
                     hammerHint: 'Remove block (watch ad)',
+                    magicHint: 'Magic block (watch ad)',
                     hammerIndicator: '🔨 Select a block to remove',
+                    magicIndicator: '✨ Select a position for magic block',
                     finalScore: 'Score:',
                     finalLoops: 'Loops:',
                     points: 'points',
@@ -1210,6 +1332,42 @@
                 });
             }
             
+            playMagic() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 2000;
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.2, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    
+                    const osc2 = this.context.createOscillator();
+                    const gain2 = this.context.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.value = 440;
+                    gain2.gain.setValueAtTime(0, now + 0.1);
+                    gain2.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.12);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc2.connect(filter);
+                    filter.connect(gain2);
+                    gain2.connect(this.context.destination);
+                    osc2.start(now + 0.1);
+                    osc2.stop(now + 0.25);
+                });
+            }
+            
             toggle() {
                 this.enabled = !this.enabled;
                 localStorage.setItem('loopixSound', this.enabled);
@@ -1259,6 +1417,7 @@
             }
             
             lightVibration() { this.vibrate(10); }
+            magicVibration() { this.vibrate([30, 20, 30]); }
             
             toggle() {
                 this.enabled = !this.enabled;
@@ -1342,9 +1501,14 @@
                 this.tutorialActive = false;
                 this.difficultyLevel = 0;
                 this.hammerMode = false;
+                this.magicMode = false;
                 this.hammerUsed = false;
+                this.magicUsed = false;
                 this.hammerAvailable = true;
+                this.magicAvailable = true;
                 this.nextHammerAt = 2000;
+                this.nextMagicAt = 2000;
+                this.selectedMagicBlock = null;
                 this.isRescueMode = false;
                 this.lastClickTime = 0;
                 this.clickDelay = 150;
@@ -1367,6 +1531,7 @@
                 this.bgHue = 170;
                 this.isNewRecord = false;
                 this.adInterval = null;
+                this.currentBonusType = null;
                 
                 this.init();
                 this.setupAutoSave();
@@ -1381,6 +1546,9 @@
                 });
                 document.getElementById('hammerBtn').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.useHammer();
+                });
+                document.getElementById('magicBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useMagic();
                 });
                 document.getElementById('soundToggle').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.toggleSound();
@@ -1418,6 +1586,9 @@
                 document.getElementById('closeShareBtn').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.closeShareModal();
                 });
+                document.getElementById('closeMagicBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeMagicModal();
+                });
                 document.getElementById('tutorialSkip').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.skipTutorial();
                 });
@@ -1437,7 +1608,9 @@
             
             updateUITexts() {
                 document.getElementById('hammerBtn').title = I18N.t('hammerHint');
+                document.getElementById('magicBtn').title = I18N.t('magicHint');
                 document.getElementById('hammerIndicator').textContent = I18N.t('hammerIndicator');
+                document.getElementById('magicIndicator').textContent = I18N.t('magicIndicator');
                 if (this.isGameOver) {
                     document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
                     document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
@@ -1479,10 +1652,11 @@
             
             saveGame() {
                 const saveData = {
-                    version: 1, score: this.score, loops: this.loops, combo: this.combo,
+                    version: 2, score: this.score, loops: this.loops, combo: this.combo,
                     maxCombo: this.maxCombo, difficultyLevel: this.difficultyLevel,
-                    hammerUsed: this.hammerUsed, hammerAvailable: this.hammerAvailable,
-                    nextHammerAt: this.nextHammerAt,
+                    hammerUsed: this.hammerUsed, magicUsed: this.magicUsed,
+                    hammerAvailable: this.hammerAvailable, magicAvailable: this.magicAvailable,
+                    nextHammerAt: this.nextHammerAt, nextMagicAt: this.nextMagicAt,
                     grid: this.grid.map(row => row.map(block => block ? {
                         type: block.type, variant: block.variant, rotation: block.rotation
                     } : null)),
@@ -1502,8 +1676,9 @@
                     this.score = data.score; this.displayScore = data.score;
                     this.loops = data.loops; this.combo = data.combo;
                     this.maxCombo = data.maxCombo; this.difficultyLevel = data.difficultyLevel;
-                    this.hammerUsed = data.hammerUsed; this.hammerAvailable = data.hammerAvailable;
-                    this.nextHammerAt = data.nextHammerAt;
+                    this.hammerUsed = data.hammerUsed; this.magicUsed = data.magicUsed || false;
+                    this.hammerAvailable = data.hammerAvailable; this.magicAvailable = data.magicAvailable !== false;
+                    this.nextHammerAt = data.nextHammerAt; this.nextMagicAt = data.nextMagicAt || 2000;
                     this.grid = data.grid.map(row => row.map(blockData => {
                         if (!blockData) return null;
                         const block = new Block(blockData.type, blockData.variant);
@@ -1522,6 +1697,7 @@
                     this.updateScore();
                     this.findLongestChain();
                     document.getElementById('hammerBtn').classList.toggle('disabled', this.hammerUsed);
+                    document.getElementById('magicBtn').classList.toggle('disabled', this.magicUsed);
                     this.setupEvents();
                     return true;
                 } catch (e) { return false; }
@@ -1541,12 +1717,18 @@
                 else this.difficultyLevel = 0;
             }
             
-            checkHammerAvailability() {
+            checkBonusesAvailability() {
                 if (this.hammerUsed && this.score >= this.nextHammerAt) {
                     this.hammerUsed = false;
                     this.hammerAvailable = true;
                     this.nextHammerAt = Math.floor(this.score / 2000) * 2000 + 2000;
                     document.getElementById('hammerBtn').classList.remove('disabled');
+                }
+                if (this.magicUsed && this.score >= this.nextMagicAt) {
+                    this.magicUsed = false;
+                    this.magicAvailable = true;
+                    this.nextMagicAt = Math.floor(this.score / 2000) * 2000 + 2000;
+                    document.getElementById('magicBtn').classList.remove('disabled');
                 }
             }
             
@@ -1744,7 +1926,6 @@
             }
             
             generateNewSet() {
-                // Генерируем новый блок только для пустых слотов
                 for (let i = 0; i < 3; i++) {
                     if (this.previewBlocks[i] === null) {
                         this.previewBlocks[i] = this.randomBlock();
@@ -1760,7 +1941,7 @@
                 if (this.canPlaceAny()) return;
                 this.isGameOver = true;
                 
-                if (this.hammerAvailable && !this.hammerUsed) {
+                if ((this.hammerAvailable && !this.hammerUsed) || (this.magicAvailable && !this.magicUsed)) {
                     document.getElementById('rescueModal').classList.add('show');
                     I18N.updateUI();
                 } else {
@@ -1937,9 +2118,10 @@
                 const gy = Math.floor((e.clientY - rect.top) / this.cellSize);
                 this.hoverCell = (gx >= 0 && gx < this.gridSize && gy >= 0 && gy < this.gridSize) ? {x: gx, y: gy} : {x: -1, y: -1};
                 this.canvas.classList.toggle('hammer-target', this.hammerMode && this.grid[gy]?.[gx]);
+                this.canvas.classList.toggle('magic-target', this.magicMode && !this.grid[gy]?.[gx]);
             }
             
-            onCanvasLeave() { this.hoverCell = {x: -1, y: -1}; this.canvas.classList.remove('hammer-target'); }
+            onCanvasLeave() { this.hoverCell = {x: -1, y: -1}; this.canvas.classList.remove('hammer-target', 'magic-target'); }
             
             onCanvasClick(e) {
                 if (!this.canProcessClick() || this.isGameOver) return;
@@ -1949,6 +2131,11 @@
                 
                 if (this.hammerMode) {
                     if (this.grid[gy]?.[gx]) this.removeBlock(gx, gy);
+                    return;
+                }
+                
+                if (this.magicMode && this.selectedMagicBlock && !this.grid[gy]?.[gx]) {
+                    this.placeMagicBlock(gx, gy);
                     return;
                 }
                 
@@ -1964,7 +2151,6 @@
             placeBlock(x, y, slotIdx) {
                 const block = this.previewBlocks[slotIdx];
                 this.grid[y][x] = block;
-                // Удаляем блок из слота
                 this.previewBlocks[slotIdx] = null;
                 audioManager.playPlace(block.type);
                 this.addBlockScaleEffect(x, y);
@@ -1980,7 +2166,6 @@
                         this.clearLoops(loops);
                         setTimeout(() => this.nextTutorialStep(), 1500);
                     }
-                    // Генерируем новый блок на место использованного
                     if (this.previewBlocks[slotIdx] === null) {
                         this.previewBlocks[slotIdx] = this.randomBlock();
                     }
@@ -2015,17 +2200,56 @@
                     this.addScreenShake(2);
                 }
                 
-                // Генерируем новый блок на место использованного
                 if (this.previewBlocks[slotIdx] === null) {
                     this.previewBlocks[slotIdx] = this.randomBlock();
                 }
                 
-                // Проверяем, есть ли возможность продолжать игру
                 if (!this.canPlaceAny()) this.checkGameOver();
                 
                 this.updateSlotClasses();
                 this.renderPreviews();
                 this.updateScore();
+            }
+            
+            placeMagicBlock(x, y) {
+                const block = new Block(this.selectedMagicBlock.type, this.selectedMagicBlock.variant);
+                for (let i = 0; i < this.selectedMagicBlock.rotation / 90; i++) block.rotate();
+                this.grid[y][x] = block;
+                audioManager.playMagic();
+                vibrationManager.magicVibration();
+                this.addBlockScaleEffect(x, y);
+                this.magicMode = false;
+                this.selectedMagicBlock = null;
+                document.getElementById('magicIndicator').classList.remove('show');
+                this.canvas.classList.remove('magic-mode', 'magic-target');
+                
+                const loops = this.findLoops();
+                if (loops.length) {
+                    const maxSize = Math.max(...loops.map(l => l.size));
+                    this.combo = maxSize;
+                    if (this.combo > this.maxCombo) {
+                        this.maxCombo = this.combo;
+                        localStorage.setItem('loopixMaxCombo', this.maxCombo);
+                    }
+                    this.addScreenShake(Math.min(maxSize * 2, 12));
+                    if (maxSize >= 5) {
+                        this.activateSlowMotion(Math.min(maxSize * 200, 2000), 0.4);
+                        this.activateDarkOverlay(Math.min(maxSize * 200, 2000) * 0.4);
+                    } else this.activateDarkOverlay(500);
+                    audioManager.playCombo(maxSize);
+                    vibrationManager.comboVibration(maxSize);
+                    this.assignGlowColors(loops);
+                    this.showComboPopup(loops);
+                    this.clearLoops(loops, loops.length);
+                    this.updateDifficultyByScore();
+                    setTimeout(() => this.findLongestChain(), 100);
+                } else {
+                    this.combo = 1;
+                    this.addScreenShake(2);
+                }
+                
+                this.updateScore();
+                if (!this.canPlaceAny()) this.checkGameOver();
             }
             
             findLongestChain() {
@@ -2049,6 +2273,7 @@
             
             useHammer() {
                 if (!this.canProcessClick() || this.hammerUsed || this.isGameOver || this.tutorialActive) return;
+                this.currentBonusType = 'hammer';
                 document.getElementById('adModal').classList.add('show');
                 I18N.updateUI();
                 let timer = 5;
@@ -2065,9 +2290,29 @@
                 }, 1000);
             }
             
+            useMagic() {
+                if (!this.canProcessClick() || this.magicUsed || this.isGameOver || this.tutorialActive) return;
+                this.currentBonusType = 'magic';
+                document.getElementById('adModal').classList.add('show');
+                I18N.updateUI();
+                let timer = 5;
+                const timerEl = document.getElementById('adTimer');
+                timerEl.textContent = timer;
+                this.adInterval = setInterval(() => {
+                    timer--;
+                    timerEl.textContent = timer;
+                    if (timer <= 0) {
+                        clearInterval(this.adInterval);
+                        document.getElementById('adModal').classList.remove('show');
+                        this.showMagicBlockSelector();
+                    }
+                }, 1000);
+            }
+            
             cancelAd() {
                 if (this.adInterval) { clearInterval(this.adInterval); this.adInterval = null; }
                 document.getElementById('adModal').classList.remove('show');
+                this.currentBonusType = null;
             }
             
             activateHammer() {
@@ -2077,6 +2322,57 @@
                 document.getElementById('hammerBtn').classList.add('disabled');
                 document.getElementById('hammerIndicator').classList.add('show');
                 this.canvas.classList.add('hammer-mode');
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+            }
+            
+            showMagicBlockSelector() {
+                this.magicUsed = true;
+                this.magicAvailable = false;
+                document.getElementById('magicBtn').classList.add('disabled');
+                
+                const grid = document.getElementById('magicBlocksGrid');
+                grid.innerHTML = '';
+                
+                const blockTypes = ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'];
+                blockTypes.forEach(type => {
+                    const variants = BLOCK_TYPES[type].variants ? BLOCK_TYPES[type].variants.length : 1;
+                    for (let v = 0; v < variants; v++) {
+                        const block = new Block(type, v);
+                        const div = document.createElement('div');
+                        div.className = 'magic-block-option';
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 50;
+                        canvas.height = 50;
+                        const ctx = canvas.getContext('2d');
+                        this.drawBlock(ctx, block, 0, 0, 50, false, true);
+                        div.appendChild(canvas);
+                        div.onclick = () => {
+                            this.selectedMagicBlock = block;
+                            document.getElementById('magicBlockModal').classList.remove('show');
+                            this.activateMagicMode();
+                        };
+                        grid.appendChild(div);
+                    }
+                });
+                
+                document.getElementById('magicBlockModal').classList.add('show');
+            }
+            
+            closeMagicModal() {
+                document.getElementById('magicBlockModal').classList.remove('show');
+                this.selectedMagicBlock = null;
+                if (!this.magicUsed) {
+                    this.magicUsed = false;
+                    this.magicAvailable = true;
+                    document.getElementById('magicBtn').classList.remove('disabled');
+                }
+            }
+            
+            activateMagicMode() {
+                this.magicMode = true;
+                document.getElementById('magicIndicator').classList.add('show');
+                this.canvas.classList.add('magic-mode');
                 this.selectedSlot = null;
                 this.updateSlotClasses();
             }
@@ -2109,13 +2405,7 @@
             }
             
             canPlaceAny() { 
-                // Проверяем, есть ли свободные клетки на поле
                 return this.grid.some(row => row.some(cell => !cell)); 
-            }
-            
-            canPlaceRemaining() {
-                const free = this.grid.reduce((s, row) => s + row.filter(c => !c).length, 0);
-                return free >= this.previewBlocks.filter(b => b).length;
             }
             
             isClosedLoop(comp) {
@@ -2207,7 +2497,7 @@
                 this.loops += chainsCleared;
                 this.animateScore(this.score);
                 this.updateScore();
-                this.checkHammerAvailability();
+                this.checkBonusesAvailability();
                 setTimeout(() => { this.lastLoopCells.clear(); this.chainGlowColors.clear(); }, 600);
             }
             
@@ -2325,6 +2615,15 @@
                         this.ctx.strokeStyle = '#ffd54f';
                         this.ctx.lineWidth = 2;
                         this.ctx.strokeRect(hx, hy, 50, 50);
+                    } else if (this.magicMode && this.selectedMagicBlock && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(224, 64, 251, 0.3)';
+                        this.ctx.fillRect(hx, hy, 50, 50);
+                        this.ctx.strokeStyle = '#e040fb';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(hx, hy, 50, 50);
+                        this.ctx.globalAlpha = 0.5;
+                        this.drawBlock(this.ctx, this.selectedMagicBlock, hx, hy, 50, false, true);
+                        this.ctx.globalAlpha = 1;
                     } else if (this.selectedSlot !== null && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
                         this.ctx.fillStyle = 'rgba(79, 195, 247, 0.2)';
                         this.ctx.fillRect(hx, hy, 50, 50);
@@ -2417,7 +2716,7 @@
                 
                 ctx.font = '30px -apple-system, sans-serif';
                 ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 0;
-                ctx.fillText('Loopix v0.9', w/2, 980);
+                ctx.fillText('Loopix v1.0', w/2, 980);
             }
             
             downloadShareImage() {
@@ -2468,21 +2767,27 @@
                 this.previewBlocks = [null, null, null]; this.selectedSlot = null;
                 this.hoverCell = { x: -1, y: -1 };
                 this.lastLoopCells.clear(); this.chainGlowColors.clear(); this.particles = [];
-                this.hammerMode = false; this.hammerUsed = false; this.hammerAvailable = true;
-                this.nextHammerAt = 2000;
+                this.hammerMode = false; this.magicMode = false;
+                this.hammerUsed = false; this.magicUsed = false;
+                this.hammerAvailable = true; this.magicAvailable = true;
+                this.nextHammerAt = 2000; this.nextMagicAt = 2000;
+                this.selectedMagicBlock = null;
                 this.shakeIntensity = 0; this.blockScaleAnimations.clear();
                 this.slowMotionActive = false; this.timeScale = 1;
                 this.dragActive = false; this.dragRotated = false;
                 this.longestChain = null; this.longestChainLength = 0;
                 this.isNewRecord = false;
                 this.darkOverlay.classList.remove('active');
-                this.canvas.classList.remove('hammer-mode', 'hammer-target', 'slow-motion-active');
+                this.canvas.classList.remove('hammer-mode', 'magic-mode', 'hammer-target', 'magic-target', 'slow-motion-active');
                 document.getElementById('hammerBtn').classList.remove('disabled');
+                document.getElementById('magicBtn').classList.remove('disabled');
                 document.getElementById('hammerIndicator').classList.remove('show');
+                document.getElementById('magicIndicator').classList.remove('show');
                 document.getElementById('gameOverModal').classList.remove('show');
                 document.getElementById('shareModal').classList.remove('show');
                 document.getElementById('rescueModal').classList.remove('show');
                 document.getElementById('adModal').classList.remove('show');
+                document.getElementById('magicBlockModal').classList.remove('show');
                 this.gameContainer.style.transform = '';
                 localStorage.removeItem('loopixSave');
                 this.setupGrid();
