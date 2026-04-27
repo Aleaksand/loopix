@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -6,12 +6,6 @@
     <title>Loopix</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>Loopix</title>
     <style>
         * { 
             margin: 0; 
@@ -742,7 +736,6 @@
             font-size: 12px;
         }
         
-        /* Убираем синее выделение на всех элементах */
         button, div, span, canvas {
             -webkit-tap-highlight-color: transparent;
             outline: none;
@@ -848,7 +841,7 @@
                 <button class="modal-btn secondary" id="closeSettingsBtn" data-i18n="close">Закрыть</button>
             </div>
             
-            <div class="modal-footer">Loopix v0.8</div>
+            <div class="modal-footer">Loopix v0.9</div>
         </div>
     </div>
     
@@ -1751,7 +1744,12 @@
             }
             
             generateNewSet() {
-                for (let i = 0; i < 3; i++) this.previewBlocks[i] = this.randomBlock();
+                // Генерируем новый блок только для пустых слотов
+                for (let i = 0; i < 3; i++) {
+                    if (this.previewBlocks[i] === null) {
+                        this.previewBlocks[i] = this.randomBlock();
+                    }
+                }
                 this.selectedSlot = null;
                 this.updateSlotClasses();
                 this.renderPreviews();
@@ -1966,6 +1964,7 @@
             placeBlock(x, y, slotIdx) {
                 const block = this.previewBlocks[slotIdx];
                 this.grid[y][x] = block;
+                // Удаляем блок из слота
                 this.previewBlocks[slotIdx] = null;
                 audioManager.playPlace(block.type);
                 this.addBlockScaleEffect(x, y);
@@ -1980,6 +1979,10 @@
                         this.showComboPopup(loops);
                         this.clearLoops(loops);
                         setTimeout(() => this.nextTutorialStep(), 1500);
+                    }
+                    // Генерируем новый блок на место использованного
+                    if (this.previewBlocks[slotIdx] === null) {
+                        this.previewBlocks[slotIdx] = this.randomBlock();
                     }
                     this.updateSlotClasses();
                     this.renderPreviews();
@@ -2012,8 +2015,13 @@
                     this.addScreenShake(2);
                 }
                 
-                if (this.previewBlocks.filter(b => b).length === 0) setTimeout(() => this.generateNewSet(), 400);
-                else if (!this.canPlaceRemaining()) this.checkGameOver();
+                // Генерируем новый блок на место использованного
+                if (this.previewBlocks[slotIdx] === null) {
+                    this.previewBlocks[slotIdx] = this.randomBlock();
+                }
+                
+                // Проверяем, есть ли возможность продолжать игру
+                if (!this.canPlaceAny()) this.checkGameOver();
                 
                 this.updateSlotClasses();
                 this.renderPreviews();
@@ -2100,7 +2108,10 @@
                 setTimeout(() => { popup.classList.remove('show'); popup.classList.add('hide'); }, 2000);
             }
             
-            canPlaceAny() { return this.grid.some(row => row.some(cell => !cell)); }
+            canPlaceAny() { 
+                // Проверяем, есть ли свободные клетки на поле
+                return this.grid.some(row => row.some(cell => !cell)); 
+            }
             
             canPlaceRemaining() {
                 const free = this.grid.reduce((s, row) => s + row.filter(c => !c).length, 0);
@@ -2363,7 +2374,7 @@
                     this.isNewRecord = true;
                     localStorage.setItem('loopixHigh', this.highScore);
                 }
-                document.getElementById('score').textContent = this.score;
+                document.getElementById('score').textContent = this.displayScore;
                 document.getElementById('highScore').textContent = this.highScore;
                 document.getElementById('maxCombo').textContent = this.maxCombo;
             }
@@ -2406,18 +2417,14 @@
                 
                 ctx.font = '30px -apple-system, sans-serif';
                 ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 0;
-                ctx.fillText('Loopix v0.8', w/2, 980);
+                ctx.fillText('Loopix v0.9', w/2, 980);
             }
             
             downloadShareImage() {
                 const canvas = document.getElementById('shareCanvas');
-                
-                // Создаём ссылку для скачивания
                 const link = document.createElement('a');
                 link.download = 'loopix-record.png';
                 link.href = canvas.toDataURL('image/png');
-                
-                // Добавляем в DOM, кликаем и удаляем
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -2425,17 +2432,10 @@
             
             async shareImage() {
                 const canvas = document.getElementById('shareCanvas');
-                
-                // Проверяем поддержку Web Share API
                 if (navigator.share && navigator.canShare) {
                     try {
-                        // Конвертируем canvas в blob
                         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                        
-                        // Создаём файл
                         const file = new File([blob], 'loopix-record.png', { type: 'image/png' });
-                        
-                        // Проверяем, можно ли поделиться файлом
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: I18N.t('shareTitle'),
@@ -2448,8 +2448,6 @@
                         console.log('Share failed, falling back to download:', e);
                     }
                 }
-                
-                // Fallback - скачивание
                 this.downloadShareImage();
             }
             
@@ -2459,7 +2457,6 @@
             }
             
             newGame() {
-                // Очищаем все интервалы
                 if (this.adInterval) {
                     clearInterval(this.adInterval);
                     this.adInterval = null;
