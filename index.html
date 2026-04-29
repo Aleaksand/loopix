@@ -1532,6 +1532,10 @@
                 this.isNewRecord = false;
                 this.adInterval = null;
                 this.currentBonusType = null;
+                this.pendingLoops = null;
+                this.loopClearTimeout = null;
+                this.particlePool = [];
+                this.maxParticles = 200;
                 
                 this.init();
                 this.setupAutoSave();
@@ -2163,8 +2167,9 @@
                         this.combo = loops.length;
                         this.assignGlowColors(loops);
                         this.showComboPopup(loops);
-                        this.clearLoops(loops);
-                        setTimeout(() => this.nextTutorialStep(), 1500);
+                        this.scheduleLoopClear(loops, () => {
+                            this.nextTutorialStep();
+                        });
                     }
                     if (this.previewBlocks[slotIdx] === null) {
                         this.previewBlocks[slotIdx] = this.randomBlock();
@@ -2192,9 +2197,8 @@
                     vibrationManager.comboVibration(maxSize);
                     this.assignGlowColors(loops);
                     this.showComboPopup(loops);
-                    this.clearLoops(loops, loops.length);
+                    this.scheduleLoopClear(loops);
                     this.updateDifficultyByScore();
-                    setTimeout(() => this.findLongestChain(), 100);
                 } else {
                     this.combo = 1;
                     this.addScreenShake(2);
@@ -2240,9 +2244,8 @@
                     vibrationManager.comboVibration(maxSize);
                     this.assignGlowColors(loops);
                     this.showComboPopup(loops);
-                    this.clearLoops(loops, loops.length);
+                    this.scheduleLoopClear(loops);
                     this.updateDifficultyByScore();
-                    setTimeout(() => this.findLongestChain(), 100);
                 } else {
                     this.combo = 1;
                     this.addScreenShake(2);
@@ -2250,6 +2253,20 @@
                 
                 this.updateScore();
                 if (!this.canPlaceAny()) this.checkGameOver();
+            }
+            
+            scheduleLoopClear(loops, callback = null) {
+                if (this.loopClearTimeout) {
+                    clearTimeout(this.loopClearTimeout);
+                }
+                this.pendingLoops = loops;
+                
+                this.loopClearTimeout = setTimeout(() => {
+                    this.clearLoops(this.pendingLoops);
+                    this.pendingLoops = null;
+                    this.loopClearTimeout = null;
+                    if (callback) callback();
+                }, 1000);
             }
             
             findLongestChain() {
@@ -2378,7 +2395,7 @@
             }
             
             removeBlock(x, y) {
-                this.createExplosion(x, y, '#ffd54f');
+                this.createExplosion(x, y, '#ffd54f', 'hammer');
                 this.grid[y][x] = null;
                 audioManager.playClear();
                 this.hammerMode = false;
@@ -2489,7 +2506,8 @@
                     loop.forEach(k => this.lastLoopCells.add(k));
                     loop.forEach(k => {
                         const [x, y] = k.split(',').map(Number);
-                        this.createExplosion(x, y, this.chainGlowColors.get(k) || '#4fc3f7');
+                        const color = this.chainGlowColors.get(k) || '#4fc3f7';
+                        this.createExplosion(x, y, color, 'loop');
                         this.grid[y][x] = null;
                     });
                 });
@@ -2498,17 +2516,86 @@
                 this.animateScore(this.score);
                 this.updateScore();
                 this.checkBonusesAvailability();
-                setTimeout(() => { this.lastLoopCells.clear(); this.chainGlowColors.clear(); }, 600);
+                setTimeout(() => { 
+                    this.lastLoopCells.clear(); 
+                    this.chainGlowColors.clear(); 
+                }, 600);
             }
             
-            createExplosion(gx, gy, color) {
-                const x = gx * this.cellSize + this.cellSize / 2;
-                const y = gy * this.cellSize + this.cellSize / 2;
-                for (let i = 0; i < 20; i++) {
-                    const angle = (Math.PI * 2 * i) / 20;
-                    const speed = 3 + Math.random() * 5;
-                    this.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-                        life: 1, color, size: 3 + Math.random() * 4, decay: 0.01 + Math.random() * 0.02 });
+            getExplosionEffect(type, size) {
+                const effects = {
+                    'loop': {
+                        particleCount: Math.min(15 + size * 2, 40),
+                        speedMin: 2,
+                        speedMax: 6,
+                        sizeMin: 2,
+                        sizeMax: 5,
+                        decayMin: 0.008,
+                        decayMax: 0.02,
+                        spreadType: 'radial'
+                    },
+                    'hammer': {
+                        particleCount: 25,
+                        speedMin: 4,
+                        speedMax: 8,
+                        sizeMin: 2,
+                        sizeMax: 4,
+                        decayMin: 0.015,
+                        decayMax: 0.03,
+                        spreadType: 'burst'
+                    },
+                    'magic': {
+                        particleCount: 20,
+                        speedMin: 1,
+                        speedMax: 4,
+                        sizeMin: 3,
+                        sizeMax: 6,
+                        decayMin: 0.005,
+                        decayMax: 0.015,
+                        spreadType: 'spiral'
+                    }
+                };
+                return effects[type] || effects['loop'];
+            }
+            
+            createExplosion(gx, gy, color, type = 'loop') {
+                const effect = this.getExplosionEffect(type, this.lastLoopCells.size || 1);
+                const cx = gx * this.cellSize + this.cellSize / 2;
+                const cy = gy * this.cellSize + this.cellSize / 2;
+                const count = effect.particleCount;
+                
+                for (let i = 0; i < count; i++) {
+                    if (this.particles.length >= this.maxParticles) {
+                        this.particles.splice(0, count);
+                    }
+                    
+                    let angle, speed;
+                    if (effect.spreadType === 'radial') {
+                        angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+                        speed = effect.speedMin + Math.random() * (effect.speedMax - effect.speedMin);
+                    } else if (effect.spreadType === 'burst') {
+                        angle = Math.atan2(
+                            (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 2
+                        );
+                        speed = effect.speedMin + Math.random() * (effect.speedMax - effect.speedMin);
+                    } else if (effect.spreadType === 'spiral') {
+                        angle = (Math.PI * 2 * i) / count + i * 0.3;
+                        speed = effect.speedMin + (i / count) * (effect.speedMax - effect.speedMin);
+                    }
+                    
+                    this.particles.push({
+                        x: cx,
+                        y: cy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        color: color,
+                        size: effect.sizeMin + Math.random() * (effect.sizeMax - effect.sizeMin),
+                        decay: effect.decayMin + Math.random() * (effect.decayMax - effect.decayMin),
+                        rotation: Math.random() * Math.PI * 2,
+                        rotationSpeed: (Math.random() - 0.5) * 0.3
+                    });
                 }
             }
             
@@ -2642,22 +2729,35 @@
                 
                 const delta = this.slowMotionActive ? this.timeScale : 1;
                 this.particles = this.particles.filter(p => {
-                    p.x += p.vx * delta; p.y += p.vy * delta; p.vy += 0.15 * delta;
+                    p.x += p.vx * delta; 
+                    p.y += p.vy * delta; 
+                    p.vy += 0.15 * delta;
+                    p.rotation += (p.rotationSpeed || 0) * delta;
                     p.life -= (p.decay || 0.02) * delta;
                     if (p.life > 0) {
+                        this.ctx.save();
                         this.ctx.globalAlpha = p.life;
                         this.ctx.fillStyle = p.color;
                         this.ctx.shadowColor = p.color;
-                        this.ctx.shadowBlur = 10;
+                        this.ctx.shadowBlur = 8;
                         this.ctx.beginPath();
-                        this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                        this.ctx.fill();
-                        this.ctx.shadowBlur = 0;
-                        this.ctx.globalAlpha = 1;
+                        if (p.rotation) {
+                            this.ctx.translate(p.x, p.y);
+                            this.ctx.rotate(p.rotation);
+                            this.ctx.fillRect(-p.size * p.life / 2, -p.size * p.life / 2, p.size * p.life, p.size * p.life);
+                        } else {
+                            this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                            this.ctx.fill();
+                        }
+                        this.ctx.restore();
                         return true;
                     }
                     return false;
                 });
+                
+                if (this.particles.length > this.maxParticles) {
+                    this.particles.splice(0, this.particles.length - this.maxParticles);
+                }
             }
             
             animate() {
@@ -2760,6 +2860,10 @@
                     clearInterval(this.adInterval);
                     this.adInterval = null;
                 }
+                if (this.loopClearTimeout) {
+                    clearTimeout(this.loopClearTimeout);
+                    this.loopClearTimeout = null;
+                }
                 
                 this.isGameOver = false;
                 this.score = 0; this.displayScore = 0; this.loops = 0; this.combo = 1;
@@ -2777,6 +2881,7 @@
                 this.dragActive = false; this.dragRotated = false;
                 this.longestChain = null; this.longestChainLength = 0;
                 this.isNewRecord = false;
+                this.pendingLoops = null;
                 this.darkOverlay.classList.remove('active');
                 this.canvas.classList.remove('hammer-mode', 'magic-mode', 'hammer-target', 'magic-target', 'slow-motion-active');
                 document.getElementById('hammerBtn').classList.remove('disabled');
