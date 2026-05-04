@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>Loopix Shift</title>
+    <title>Loopix</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { 
@@ -11,88 +11,58 @@
             padding: 0; 
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
         html, body {
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            touch-action: manipulation;
         }
         body {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: white;
+            overflow: hidden;
             background: linear-gradient(180deg, #1a1a3e 0%, #2d2d5a 100%);
+            transition: background 0.5s ease;
+            touch-action: manipulation;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
         h1 {
+            margin: 0;
+            padding: 25px 0 15px;
             font-size: 2.8em;
             font-weight: 800;
             letter-spacing: 6px;
+            color: transparent;
             background: linear-gradient(135deg, #4fc3f7 0%, #69f0ae 50%, #ffd54f 100%);
             -webkit-background-clip: text;
             background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 40px rgba(79, 195, 247, 0.5);
-            margin: 15px 0 5px;
+            text-shadow: 0 0 40px rgba(79, 195, 247, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            transform: perspective(500px) rotateX(2deg);
             line-height: 1.2;
-        }
-        .subtitle {
-            font-size: 0.9em;
-            opacity: 0.7;
-            letter-spacing: 3px;
-            margin-bottom: 15px;
         }
         #gameContainer {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
+            position: relative;
             width: 100%;
             max-width: 400px;
-            padding: 0 20px;
-            flex: 1;
-            overflow: hidden;
-        }
-        #scoreBoard {
-            display: flex;
-            gap: 20px;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 12px 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .score-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-        }
-        .score-label {
-            font-size: 0.7em;
-            opacity: 0.6;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .score-value {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #4fc3f7;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #mainCanvas {
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            touch-action: none;
-            display: block;
-            cursor: pointer;
+            padding: 0 20px 70px;
+            transition: transform 0.05s ease-out;
         }
         #gameWrapper {
             position: relative;
@@ -100,8 +70,10 @@
         }
         #darkOverlay {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: black;
             opacity: 0;
             pointer-events: none;
@@ -111,6 +83,539 @@
         }
         #darkOverlay.active {
             opacity: 0.5;
+            pointer-events: none;
+        }
+        #scoreBoard {
+            display: flex;
+            gap: 25px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .score-label {
+            font-size: 0.75em;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .score-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #4fc3f7;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .score-value.combo {
+            color: #ffd54f;
+        }
+        .score-value.animate {
+            transform: scale(1.3);
+            color: #ffd54f;
+            text-shadow: 0 0 20px #ffd54f;
+        }
+        #mainCanvas {
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            cursor: crosshair;
+            transition: all 0.3s;
+            touch-action: none;
+            position: relative;
+            z-index: 1;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #previewPanel {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: all 0.3s;
+            align-items: center;
+        }
+        .preview-slot {
+            width: 70px;
+            height: 70px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .preview-slot.has-block:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .preview-slot.selected {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+            transform: scale(1.1);
+        }
+        .preview-slot.empty {
+            opacity: 0.3;
+            cursor: default;
+        }
+        .preview-slot.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .preview-slot.tutorial-active {
+            animation: tutorial-pulse 1s ease-in-out infinite;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 30px rgba(79, 195, 247, 0.6);
+        }
+        @keyframes tutorial-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 40px rgba(79, 195, 247, 0.8); transform: scale(1.05); }
+        }
+        .preview-slot canvas {
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .preview-slot.dragging {
+            border-color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+        }
+        .bonus-buttons {
+            position: fixed;
+            top: max(20px, env(safe-area-inset-top, 20px));
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+        .bonus-left {
+            left: max(20px, env(safe-area-inset-left, 20px));
+        }
+        .bonus-right {
+            right: max(20px, env(safe-area-inset-right, 20px));
+        }
+        .bonus-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        #hammerBtn {
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+        }
+        #magicBtn {
+            background: linear-gradient(135deg, #e040fb, #7c4dff);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(224, 64, 251, 0.4);
+        }
+        .bonus-btn .ad-label {
+            font-size: 8px;
+            font-weight: bold;
+            margin-top: -2px;
+            letter-spacing: 0.5px;
+        }
+        #hammerBtn .ad-label {
+            color: #1a1a3e;
+        }
+        #magicBtn .ad-label {
+            color: #1a1a3e;
+        }
+        .bonus-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+        .bonus-btn.disabled .ad-label {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .bonus-btn:hover:not(.disabled) {
+            transform: scale(1.1);
+        }
+        .bonus-btn:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        #hammerIndicator, #magicIndicator {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        #hammerIndicator.show {
+            opacity: 1;
+            background: rgba(255, 213, 79, 0.9);
+            color: #1a1a3e;
+            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+        }
+        #magicIndicator.show {
+            opacity: 1;
+            background: rgba(224, 64, 251, 0.9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(224, 64, 251, 0.4);
+        }
+        #magicBlockModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            backdrop-filter: blur(8px);
+        }
+        #magicBlockModal.show {
+            display: flex;
+        }
+        .magic-block-panel {
+            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+            max-width: 90vw;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .magic-block-panel h3 {
+            margin-bottom: 20px;
+            color: #e040fb;
+            font-size: 1.3em;
+        }
+        .magic-blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .magic-block-option {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .magic-block-option:hover {
+            transform: scale(1.05);
+            border-color: #e040fb;
+            background: rgba(224, 64, 251, 0.2);
+        }
+        .magic-block-option canvas {
+            border-radius: 8px;
+        }
+        .magic-close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        .magic-mode {
+            cursor: pointer !important;
+        }
+        .magic-target {
+            animation: magic-pulse 0.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(224, 64, 251, 0.8) !important;
+        }
+        @keyframes magic-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        #settingsBtn {
+            position: fixed;
+            top: max(20px, env(safe-area-inset-top, 20px));
+            right: max(20px, env(safe-area-inset-right, 20px));
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            z-index: 100;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #settingsBtn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+        }
+        #settingsBtn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .bonus-left {
+            left: max(20px, env(safe-area-inset-left, 20px));
+        }
+        .bonus-right {
+            right: max(20px, env(safe-area-inset-right, 20px));
+        }
+        #settingsModal, #gameOverModal, #adModal, #rescueModal, #shareModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        #settingsModal.show, #gameOverModal.show, #adModal.show, #rescueModal.show, #shareModal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-content h2, .modal-content h3 {
+            margin-bottom: 20px;
+            color: white;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+        .modal-content h3 {
+            color: #ffd54f;
+        }
+        .modal-content p {
+            margin-bottom: 30px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            color: white;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .volume-slider {
+            width: 120px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4fc3f7;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+        .volume-value {
+            min-width: 45px;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+        .toggle-switch {
+            width: 48px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .toggle-switch.active {
+            background: #4fc3f7;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .toggle-switch.active::after {
+            transform: translateX(22px);
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .modal-btn {
+            border: none;
+            color: white;
+            padding: 14px 20px;
+            font-size: 0.95em;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            width: 100%;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .modal-btn:active {
+            transform: scale(0.97);
+        }
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+        }
+        .modal-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
+        }
+        .modal-btn.primary:active {
+            transform: translateY(0);
+        }
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .modal-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .modal-btn.warning {
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            color: #1a1a3e;
+        }
+        .modal-footer {
+            margin-top: 20px;
+            font-size: 0.8em;
+            opacity: 0.5;
+        }
+        .lang-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .lang-option {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            flex: 1;
+            max-width: 120px;
+        }
+        .lang-option.active {
+            background: #4fc3f7;
+            color: #1a1a3e;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+        }
+        .lang-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .lang-option:active {
+            transform: scale(0.95);
+        }
+        #gameOverScreen h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            text-shadow: 0 0 30px rgba(79, 195, 247, 0.5);
+        }
+        #finalScore {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        #finalLoops {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.7;
         }
         #comboPopup {
             position: fixed;
@@ -126,622 +631,1831 @@
         #comboPopup.show {
             transform: translate(-50%, -50%) scale(1);
         }
+        #comboPopup.hide {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+        }
         .combo-text {
-            font-size: 3em;
+            font-size: 3.5em;
             font-weight: bold;
             text-transform: uppercase;
+            letter-spacing: 4px;
+            filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.8));
+        }
+        .combo-count {
+            font-size: 1.5em;
+            margin-top: 10px;
+            opacity: 0.9;
+            font-weight: bold;
             filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.8));
         }
-        .combo-sub {
-            font-size: 1.2em;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-        #settingsBtn {
+        #tutorialOverlay {
             position: fixed;
-            top: max(15px, env(safe-area-inset-top, 15px));
-            right: max(15px, env(safe-area-inset-right, 15px));
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            z-index: 100;
-            transition: all 0.3s;
-        }
-        #settingsBtn:active {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(0.95);
-        }
-        #settingsModal, #gameOverModal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
+            pointer-events: none;
         }
-        #settingsModal.show, #gameOverModal.show {
-            display: flex;
+        #tutorialOverlay.show {
+            display: block;
         }
-        .modal-content {
-            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
-            border-radius: 24px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            min-width: 300px;
-            max-width: 350px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .modal-content h2 {
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-        .modal-content p {
-            margin: 5px 0;
-            opacity: 0.9;
-        }
-        .modal-actions {
-            display: flex;
+        .tutorial-step {
+            position: absolute;
+            display: none;
             flex-direction: column;
+            align-items: center;
             gap: 10px;
-            margin-top: 25px;
+            pointer-events: none;
         }
-        .modal-btn {
+        .tutorial-step.active {
+            display: flex;
+        }
+        .tutorial-text {
+            background: rgba(79, 195, 247, 0.95);
+            color: #1a1a3e;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(79, 195, 247, 0.5);
+            animation: float 2s ease-in-out infinite;
+            pointer-events: auto;
+            cursor: pointer;
+            max-width: 90vw;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        #tutorialSkip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 107, 157, 0.9);
             border: none;
             color: white;
-            padding: 14px 20px;
-            border-radius: 12px;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            white-space: nowrap;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        #tutorialSkip:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        .canvas-tutorial {
+            animation: canvas-pulse 1.5s ease-in-out infinite;
+            cursor: pointer !important;
+        }
+        @keyframes canvas-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.8); }
+        }
+        .tutorial-target {
+            position: absolute;
+            border: 3px dashed #ffd54f;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.5);
+            animation: target-pulse 1s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes target-pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .hammer-mode {
+            cursor: crosshair !important;
+        }
+        .hammer-target {
+            animation: hammer-pulse 0.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 213, 79, 0.8) !important;
+        }
+        .ad-timer {
+            font-size: 2em;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .slow-motion-active {
+            animation: slowMotionPulse 0.5s ease-out;
+        }
+        @keyframes slowMotionPulse {
+            0% { box-shadow: 0 0 0 rgba(79, 195, 247, 0); }
+            50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.5); }
+            100% { box-shadow: 0 0 0 rgba(79, 195, 247, 0); }
+        }
+        #shareCanvas {
+            width: 100%;
+            max-width: 280px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .share-btn {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            border: none;
+            color: white;
+            padding: 12px 18px;
+            font-size: 0.9em;
+            border-radius: 30px;
             cursor: pointer;
             font-weight: 600;
-            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
             transition: all 0.3s;
-            font-size: 0.95em;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+            justify-content: center;
         }
-        .modal-btn:active {
-            transform: scale(0.97);
-        }
-        .modal-btn.primary {
-            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
-        }
-        .modal-btn.secondary {
+        .share-btn.secondary {
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: none;
         }
-        #newRecordBadge {
-            display: none;
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+        .new-record-badge {
             background: linear-gradient(135deg, #ffd54f, #ff8a65);
             color: #1a1a3e;
             padding: 8px 20px;
             border-radius: 30px;
             font-weight: bold;
+            font-size: 1.2em;
             margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(255, 213, 79, 0.5);
             animation: pulse-glow 1.5s ease-in-out infinite;
         }
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 4px 20px rgba(255, 213, 79, 0.5); }
             50% { box-shadow: 0 8px 30px rgba(255, 213, 79, 0.8); }
         }
-        #difficultyIndicator {
+        #yandexBanner {
             position: fixed;
-            top: max(80px, env(safe-area-inset-top, 80px));
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
             background: rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            opacity: 0.7;
-            z-index: 50;
-            pointer-events: none;
-            transition: all 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+        
+        button, div, span, canvas {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        
+        button:focus, div:focus {
+            outline: none;
         }
     </style>
 </head>
 <body>
     <h1>LOOPIX</h1>
-    <div class="subtitle">SHIFT</div>
+    <div class="bonus-buttons bonus-left">
+        <div id="hammerBtn" class="bonus-btn" title="Удалить блок (смотреть рекламу)">
+            🔨
+            <span class="ad-label">AD</span>
+        </div>
+        <div id="magicBtn" class="bonus-btn" title="Волшебный блок (смотреть рекламу)">
+            ✨
+            <span class="ad-label">AD</span>
+        </div>
+    </div>
     <div id="settingsBtn">⚙️</div>
-    <div id="difficultyIndicator">Уровень 1</div>
-    
+    <div id="hammerIndicator">🔨 Выбери блок для удаления</div>
+    <div id="magicIndicator">✨ Выбери место для магического блока</div>
     <div id="gameContainer">
         <div id="scoreBoard">
             <div class="score-item">
-                <span class="score-label">Счёт</span>
+                <span class="score-label" data-i18n="score">Счёт</span>
                 <span class="score-value" id="score">0</span>
             </div>
             <div class="score-item">
-                <span class="score-label">Рекорд</span>
+                <span class="score-label" data-i18n="record">Рекорд</span>
                 <span class="score-value" id="highScore">0</span>
             </div>
             <div class="score-item">
-                <span class="score-label">Ходы</span>
-                <span class="score-value" id="moves">0</span>
+                <span class="score-label" data-i18n="maxCombo">Макс Комбо</span>
+                <span class="score-value combo" id="maxCombo">0</span>
             </div>
         </div>
-        
         <div id="gameWrapper">
-            <canvas id="mainCanvas" width="360" height="360"></canvas>
+            <canvas id="mainCanvas" width="300" height="300"></canvas>
             <div id="darkOverlay"></div>
+        </div>
+        <div id="previewPanel">
+            <div class="preview-slot has-block" id="slot0" data-index="0">
+                <canvas id="preview0" width="50" height="50"></canvas>
+            </div>
+            <div class="preview-slot has-block" id="slot1" data-index="1">
+                <canvas id="preview1" width="50" height="50"></canvas>
+            </div>
+            <div class="preview-slot has-block" id="slot2" data-index="2">
+                <canvas id="preview2" width="50" height="50"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div id="magicBlockModal">
+        <div class="magic-block-panel">
+            <h3>✨ Выбери волшебный блок ✨</h3>
+            <div class="magic-blocks-grid" id="magicBlocksGrid"></div>
+            <button class="magic-close-btn" id="closeMagicBtn">Отмена</button>
         </div>
     </div>
     
     <div id="comboPopup">
-        <div class="combo-text" id="comboText">LOOP!</div>
-        <div class="combo-sub" id="comboSub"></div>
+        <div class="combo-text" id="comboText">КРУТО!</div>
+        <div class="combo-count" id="comboCount">КОМБО x4</div>
+    </div>
+    
+    <div id="tutorialOverlay">
+        <div class="tutorial-step" id="step1">
+            <div class="tutorial-text" data-i18n="tutorialStep1">Выбери блок</div>
+        </div>
+        <div class="tutorial-step" id="step2">
+            <div class="tutorial-text" data-i18n="tutorialStep2">Свайпни или нажми чтобы повернуть</div>
+        </div>
+        <div class="tutorial-step" id="step3">
+            <div class="tutorial-text" data-i18n="tutorialStep3">Ставь сюда</div>
+        </div>
+        <div id="tutorialTarget" class="tutorial-target"></div>
+        <button id="tutorialSkip" data-i18n="skipTutorial">Пропустить обучение</button>
     </div>
     
     <div id="settingsModal">
         <div class="modal-content">
-            <h2>Настройки</h2>
+            <h2 data-i18n="settings">Настройки</h2>
+            
+            <div class="lang-selector">
+                <div class="lang-option" data-lang="ru">Русский</div>
+                <div class="lang-option" data-lang="en">English</div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="sound">Звук</span>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="soundToggle"></div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="volume">Громкость</span>
+                <div class="setting-control">
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                    <span class="volume-value" id="volumeValue">70%</span>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="vibration">Вибрация</span>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="vibrationToggle"></div>
+                </div>
+            </div>
+            
             <div class="modal-actions">
-                <button class="modal-btn primary" id="newGameBtn">Новая игра</button>
-                <button class="modal-btn secondary" id="closeSettingsBtn">Закрыть</button>
+                <button class="modal-btn primary" id="newGameBtn" data-i18n="newGame">Начать заново</button>
+                <button class="modal-btn secondary" id="closeSettingsBtn" data-i18n="close">Закрыть</button>
+            </div>
+            
+            <div class="modal-footer">Loopix v1.0</div>
+        </div>
+    </div>
+    
+    <div id="adModal">
+        <div class="modal-content">
+            <h3 data-i18n="adTitle">🔨 Реклама</h3>
+            <p data-i18n="adText">Просмотрите рекламу, чтобы получить бонус</p>
+            <div class="ad-timer" id="adTimer">5</div>
+            <button class="modal-btn secondary" id="cancelAdBtn" data-i18n="cancel">Отмена</button>
+        </div>
+    </div>
+    
+    <div id="rescueModal">
+        <div class="modal-content">
+            <h3 data-i18n="lastChance">Последний шанс</h3>
+            <p data-i18n="noMoves">Нет ходов. Смотреть рекламу и использовать молоток?</p>
+            <div class="modal-actions">
+                <button class="modal-btn warning" id="rescueHammerBtn" data-i18n="watchAd">Смотреть рекламу</button>
+                <button class="modal-btn secondary" id="declineRescueBtn" data-i18n="newGameShort">Новая игра</button>
             </div>
         </div>
     </div>
     
     <div id="gameOverModal">
-        <div class="modal-content">
-            <div id="newRecordBadge">🏆 НОВЫЙ РЕКОРД 🏆</div>
-            <h2>ИГРА ОКОНЧЕНА</h2>
-            <p id="finalScore">Счёт: 0</p>
-            <p id="finalLoops">Петель: 0</p>
-            <p id="finalMoves">Ходов: 0</p>
+        <div class="modal-content" id="gameOverContent">
+            <h2>GAME OVER</h2>
+            <div id="finalScore">Счёт: 0</div>
+            <div id="finalLoops">Петель: 0</div>
             <div class="modal-actions">
-                <button class="modal-btn primary" id="playAgainBtn">Играть снова</button>
+                <button class="modal-btn primary" id="playAgainBtn" data-i18n="playAgain">Начать заново</button>
             </div>
         </div>
     </div>
     
+    <div id="shareModal">
+        <div class="modal-content">
+            <div class="new-record-badge" data-i18n="newRecord">🏆 НОВЫЙ РЕКОРД 🏆</div>
+            <canvas id="shareCanvas" width="1080" height="1080"></canvas>
+            <div class="share-buttons">
+                <button class="share-btn" id="downloadBtn" data-i18n="download">📥 Скачать</button>
+                <button class="share-btn" id="shareBtn" data-i18n="share">📤 Поделиться</button>
+                <button class="share-btn secondary" id="closeShareBtn" data-i18n="close">✕ Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="yandexBanner" data-i18n="adBanner">Рекламный баннер</div>
+    
     <script>
+        function detectSystemLanguage() {
+            const navLang = navigator.language || navigator.userLanguage || 'ru';
+            const lang = navLang.toLowerCase().split('-')[0];
+            const supportedLangs = ['ru', 'en'];
+            return supportedLangs.includes(lang) ? lang : 'ru';
+        }
+        
+        const I18N = {
+            currentLang: localStorage.getItem('loopixLang') || detectSystemLanguage(),
+            
+            translations: {
+                ru: {
+                    score: 'Счёт',
+                    record: 'Рекорд',
+                    maxCombo: 'Макс Комбо',
+                    comboCool: 'КРУТО!',
+                    comboGreat: 'ОТЛИЧНО!',
+                    comboSuper: 'СУПЕР!',
+                    comboWow: 'ВАУ!',
+                    comboNice: 'КЛАСС!',
+                    comboGood: 'МОЛОДЕЦ!',
+                    comboImba: 'ИМБА!',
+                    comboFire: 'ОГОНЬ!',
+                    comboGenius: 'ГЕНИЙ!',
+                    comboAwesome: 'ШИКАРНО!',
+                    comboLegend: 'ЛЕГЕНДА!',
+                    comboMachine: 'МАШИНА!',
+                    comboMega: 'МЕГА-ХОРОШ!',
+                    comboBuya: 'БУЙЯ!',
+                    comboSolo: 'СОЛО!',
+                    comboHere: 'СЮДА!',
+                    comboUltra: 'УЛЬТРА-ХОРОШ!',
+                    comboTimes: 'КОМБО x',
+                    tutorialStep1: 'Выбери блок',
+                    tutorialStep2: 'Свайпни или нажми чтобы повернуть',
+                    tutorialStep3: 'Ставь сюда',
+                    skipTutorial: 'Пропустить обучение',
+                    settings: 'Настройки',
+                    sound: 'Звук',
+                    volume: 'Громкость',
+                    vibration: 'Вибрация',
+                    newGame: 'Начать заново',
+                    close: 'Закрыть',
+                    adTitle: '🎁 Реклама',
+                    adText: 'Просмотрите рекламу, чтобы получить бонус',
+                    cancel: 'Отмена',
+                    lastChance: 'Последний шанс',
+                    noMoves: 'Нет ходов. Смотреть рекламу и использовать молоток?',
+                    watchAd: 'Смотреть рекламу',
+                    newGameShort: 'Новая игра',
+                    playAgain: 'Начать заново',
+                    newRecord: '🏆 НОВЫЙ РЕКОРД 🏆',
+                    download: '📥 Скачать',
+                    share: '📤 Поделиться',
+                    adBanner: 'Рекламный баннер',
+                    hammerHint: 'Удалить блок (смотреть рекламу)',
+                    magicHint: 'Волшебный блок (смотреть рекламу)',
+                    hammerIndicator: '🔨 Выбери блок для удаления',
+                    magicIndicator: '✨ Выбери место для магического блока',
+                    finalScore: 'Счёт:',
+                    finalLoops: 'Петель:',
+                    points: 'очков',
+                    shareText: 'Я набрал {score} очков в Loopix! А ты так сможешь?',
+                    shareTitle: 'Loopix - Новый рекорд!',
+                    canYouBeat: 'А ТЫ ТАК СМОЖЕШЬ?'
+                },
+                en: {
+                    score: 'Score',
+                    record: 'Record',
+                    maxCombo: 'Max Combo',
+                    comboCool: 'COOL!',
+                    comboGreat: 'GREAT!',
+                    comboSuper: 'SUPER!',
+                    comboWow: 'WOW!',
+                    comboNice: 'NICE!',
+                    comboGood: 'GOOD!',
+                    comboImba: 'IMBA!',
+                    comboFire: 'FIRE!',
+                    comboGenius: 'GENIUS!',
+                    comboAwesome: 'AWESOME!',
+                    comboLegend: 'LEGEND!',
+                    comboMachine: 'MACHINE!',
+                    comboMega: 'MEGA!',
+                    comboBuya: 'BOOYAH!',
+                    comboSolo: 'SOLO!',
+                    comboHere: 'NICE!',
+                    comboUltra: 'ULTRA!',
+                    comboTimes: 'COMBO x',
+                    tutorialStep1: 'Select a block',
+                    tutorialStep2: 'Swipe or tap to rotate',
+                    tutorialStep3: 'Place here',
+                    skipTutorial: 'Skip tutorial',
+                    settings: 'Settings',
+                    sound: 'Sound',
+                    volume: 'Volume',
+                    vibration: 'Vibration',
+                    newGame: 'New Game',
+                    close: 'Close',
+                    adTitle: '🎁 Ad',
+                    adText: 'Watch an ad to get a bonus',
+                    cancel: 'Cancel',
+                    lastChance: 'Last Chance',
+                    noMoves: 'No moves left. Watch ad to use hammer?',
+                    watchAd: 'Watch Ad',
+                    newGameShort: 'New Game',
+                    playAgain: 'Play Again',
+                    newRecord: '🏆 NEW RECORD 🏆',
+                    download: '📥 Download',
+                    share: '📤 Share',
+                    adBanner: 'Advertisement',
+                    hammerHint: 'Remove block (watch ad)',
+                    magicHint: 'Magic block (watch ad)',
+                    hammerIndicator: '🔨 Select a block to remove',
+                    magicIndicator: '✨ Select a position for magic block',
+                    finalScore: 'Score:',
+                    finalLoops: 'Loops:',
+                    points: 'points',
+                    shareText: 'I scored {score} points in Loopix! Can you beat that?',
+                    shareTitle: 'Loopix - New Record!',
+                    canYouBeat: 'CAN YOU BEAT THAT?'
+                }
+            },
+            
+            t(key, params = {}) {
+                let text = this.translations[this.currentLang]?.[key] || this.translations['ru'][key] || key;
+                for (const [param, value] of Object.entries(params)) {
+                    text = text.replace(`{${param}}`, value);
+                }
+                return text;
+            },
+            
+            setLanguage(lang) {
+                if (this.translations[lang]) {
+                    this.currentLang = lang;
+                    localStorage.setItem('loopixLang', lang);
+                    this.updateUI();
+                    return true;
+                }
+                return false;
+            },
+            
+            updateUI() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.textContent = this.t(key);
+                });
+                
+                document.querySelectorAll('.lang-option').forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.lang === this.currentLang);
+                });
+                
+                if (typeof game !== 'undefined' && game.updateUITexts) {
+                    game.updateUITexts();
+                }
+            }
+        };
+        
+        const getComboPhrases = () => [
+            I18N.t('comboCool'), I18N.t('comboGreat'), I18N.t('comboSuper'), 
+            I18N.t('comboWow'), I18N.t('comboNice'), I18N.t('comboGood'),
+            I18N.t('comboImba'), I18N.t('comboFire'), I18N.t('comboGenius'), 
+            I18N.t('comboAwesome'), I18N.t('comboLegend'), I18N.t('comboMachine'),
+            I18N.t('comboMega'), I18N.t('comboBuya'), I18N.t('comboSolo'),
+            I18N.t('comboHere'), I18N.t('comboUltra')
+        ];
+        
+        (function() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(() => {});
+            }
+        })();
+        
+        const YaGames = {
+            init: () => Promise.resolve({
+                getAdv: () => ({
+                    showFullscreenAdv: () => Promise.resolve(),
+                    showRewardedVideo: () => Promise.resolve({ type: 'rewarded', rewarded: true }),
+                    showBannerAdv: () => Promise.resolve()
+                }),
+                getLeaderboards: () => ({
+                    setLeaderboardScore: () => Promise.resolve()
+                }),
+                getPlayer: () => ({
+                    getName: () => 'Player'
+                })
+            })
+        };
+        
+        class AudioManager {
+            constructor() {
+                this.context = null;
+                this.enabled = localStorage.getItem('loopixSound') !== 'false';
+                this.volume = parseFloat(localStorage.getItem('loopixVolume') || '0.6');
+                this.initialized = false;
+                if (this.enabled) this.init();
+                this.updateUI();
+            }
+            
+            init() {
+                try {
+                    this.context = new (window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                } catch (e) {}
+            }
+            
+            async ensureContext() {
+                if (!this.enabled) return false;
+                if (!this.context) this.init();
+                if (this.context && this.context.state === 'suspended') {
+                    await this.context.resume();
+                }
+                return this.context && this.context.state === 'running';
+            }
+            
+            playPlace(blockType = 'STRAIGHT') {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc1 = this.context.createOscillator();
+                    const osc2 = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    const sounds = {
+                        'STRAIGHT': { freq1: 440, freq2: 550, duration: 0.1 },
+                        'CORNER': { freq1: 523, freq2: 659, duration: 0.12 },
+                        'T_SHAPE': { freq1: 587, freq2: 698, duration: 0.11 },
+                        'CROSS': { freq1: 659, freq2: 783, duration: 0.1 }
+                    };
+                    const sound = sounds[blockType] || sounds['STRAIGHT'];
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 2000;
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.value = sound.freq1;
+                    osc2.frequency.value = sound.freq2;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + sound.duration);
+                    osc1.connect(filter);
+                    osc2.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + sound.duration);
+                    osc2.stop(now + sound.duration);
+                });
+            }
+            
+            playRotate() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.1, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                    osc.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                });
+            }
+            
+            playCombo(size) {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const chordNotes = size >= 10 ? [523.25, 659.25, 783.99, 1046.50] :
+                                      size >= 7 ? [523.25, 659.25, 783.99] :
+                                      size >= 5 ? [523.25, 659.25] : [523.25];
+                    chordNotes.forEach((freq, i) => {
+                        const osc = this.context.createOscillator();
+                        const gain = this.context.createGain();
+                        const filter = this.context.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 1500;
+                        osc.type = i === 0 ? 'sine' : 'triangle';
+                        osc.frequency.value = freq;
+                        const startTime = now + i * 0.05;
+                        gain.gain.setValueAtTime(0, startTime);
+                        gain.gain.linearRampToValueAtTime(this.volume * 0.2, startTime + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.context.destination);
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.3);
+                    });
+                });
+            }
+            
+            playClear() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+                    osc.type = 'sine';
+                    osc.frequency.value = 330;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                });
+            }
+            
+            playMagic() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 2000;
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.2, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    
+                    const osc2 = this.context.createOscillator();
+                    const gain2 = this.context.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.value = 440;
+                    gain2.gain.setValueAtTime(0, now + 0.1);
+                    gain2.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.12);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc2.connect(filter);
+                    filter.connect(gain2);
+                    gain2.connect(this.context.destination);
+                    osc2.start(now + 0.1);
+                    osc2.stop(now + 0.25);
+                });
+            }
+            
+            toggle() {
+                this.enabled = !this.enabled;
+                localStorage.setItem('loopixSound', this.enabled);
+                this.updateUI();
+                if (this.enabled && !this.initialized) this.init();
+            }
+            
+            setVolume(value) {
+                this.volume = value / 100;
+                localStorage.setItem('loopixVolume', this.volume);
+                document.getElementById('volumeValue').textContent = value + '%';
+            }
+            
+            updateUI() {
+                const toggle = document.getElementById('soundToggle');
+                const slider = document.getElementById('volumeSlider');
+                if (this.enabled) {
+                    toggle.classList.add('active');
+                    slider.disabled = false;
+                } else {
+                    toggle.classList.remove('active');
+                    slider.disabled = true;
+                }
+                const volumePercent = Math.round(this.volume * 100);
+                slider.value = volumePercent;
+                document.getElementById('volumeValue').textContent = volumePercent + '%';
+            }
+        }
+        
+        class VibrationManager {
+            constructor() {
+                this.enabled = localStorage.getItem('loopixVibration') !== 'false';
+                this.updateUI();
+            }
+            
+            vibrate(pattern) {
+                if (!this.enabled) return;
+                if (typeof navigator.vibrate === 'function') navigator.vibrate(pattern);
+            }
+            
+            comboVibration(size) {
+                if (!this.enabled) return;
+                const pattern = size >= 10 ? [50, 40, 50, 40, 100] :
+                               size >= 7 ? [40, 30, 60, 30, 80] :
+                               size >= 5 ? [30, 30, 50] : [20, 20, 40];
+                this.vibrate(pattern);
+            }
+            
+            lightVibration() { this.vibrate(10); }
+            magicVibration() { this.vibrate([30, 20, 30]); }
+            
+            toggle() {
+                this.enabled = !this.enabled;
+                localStorage.setItem('loopixVibration', this.enabled);
+                this.updateUI();
+            }
+            
+            updateUI() {
+                const toggle = document.getElementById('vibrationToggle');
+                toggle.classList.toggle('active', this.enabled);
+            }
+        }
+        
+        const audioManager = new AudioManager();
+        const vibrationManager = new VibrationManager();
+        
         const COLORS = {
-            STRAIGHT: '#4fc3f7',
-            CORNER: '#69f0ae',
-            T_SHAPE: '#ffd54f',
-            CROSS: '#ff8a65'
+            blocks: { STRAIGHT: '#4fc3f7', CORNER: '#69f0ae', T_SHAPE: '#ffd54f', CROSS: '#ff8a65' },
+            chainColors: {
+                small: ['#4fc3f7', '#69f0ae', '#ffd54f'],
+                medium: ['#ff6b9d', '#4fc3f7', '#69f0ae'],
+                large: ['#ffd54f', '#ff8a65', '#ff6b9d'],
+                epic: ['#e040fb', '#7c4dff', '#448aff'],
+                legendary: ['#ff1744', '#f50057', '#d500f9']
+            }
         };
-
-        // Система сложности как в оригинале
-        const DIFFICULTY = {
-            0: { minScore: 0, types: ['STRAIGHT', 'CORNER'], name: 'Уровень 1' },
-            1: { minScore: 500, types: ['STRAIGHT', 'CORNER', 'T_SHAPE'], name: 'Уровень 2' },
-            2: { minScore: 2000, types: ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'], name: 'Уровень 3' },
-            3: { minScore: 5000, types: ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'], name: 'Уровень 4' }
+        
+        const BLOCK_PRICES = { 'STRAIGHT': 2, 'CORNER': 2, 'T_SHAPE': 4, 'CROSS': 8 };
+        const COMBO_COLORS = ['#4fc3f7', '#69f0ae', '#ffd54f', '#ff8a65', '#ff6b9d', '#e040fb', '#7c4dff'];
+        
+        const BLOCK_TYPES = {
+            EMPTY: { connectorCount: 0, connectors: [0,0,0,0] },
+            STRAIGHT: { connectorCount: 2, variants: [{ connectors: [1,0,1,0] },{ connectors: [0,1,0,1] }] },
+            CORNER: { connectorCount: 2, variants: [{ connectors: [1,1,0,0] },{ connectors: [0,1,1,0] },{ connectors: [0,0,1,1] },{ connectors: [1,0,0,1] }] },
+            T_SHAPE: { connectorCount: 3, variants: [{ connectors: [1,1,1,0] },{ connectors: [0,1,1,1] },{ connectors: [1,0,1,1] },{ connectors: [1,1,0,1] }] },
+            CROSS: { connectorCount: 4, connectors: [1,1,1,1] }
         };
-
+        
         class Block {
             constructor(type, variant = 0) {
                 this.type = type;
                 this.variant = variant;
                 this.rotation = 0;
-                this.price = { STRAIGHT: 1, CORNER: 2, T_SHAPE: 3, CROSS: 4 }[type] || 1;
-                
-                if (type === 'STRAIGHT') {
-                    this.connectors = variant === 0 ? [1,0,1,0] : [0,1,0,1];
-                } else if (type === 'CORNER') {
-                    const variants = [[1,1,0,0], [0,1,1,0], [0,0,1,1], [1,0,0,1]];
-                    this.connectors = [...variants[variant % 4]];
-                } else if (type === 'T_SHAPE') {
-                    const variants = [[1,1,1,0], [0,1,1,1], [1,0,1,1], [1,1,0,1]];
-                    this.connectors = [...variants[variant % 4]];
-                } else if (type === 'CROSS') {
-                    this.connectors = [1,1,1,1];
-                }
-                this.color = COLORS[type];
+                this.price = BLOCK_PRICES[type] || 0;
+                if (type === 'CROSS') this.connectors = [...BLOCK_TYPES.CROSS.connectors];
+                else if (type === 'EMPTY') this.connectors = [0,0,0,0];
+                else this.connectors = [...BLOCK_TYPES[type].variants[variant].connectors];
+                this.color = COLORS.blocks[type] || '#2c3e50';
             }
-            
             rotate() {
                 const [top, right, bottom, left] = this.connectors;
                 this.connectors = [left, top, right, bottom];
                 this.rotation = (this.rotation + 90) % 360;
             }
-            
-            getConnector(dir) { return this.connectors[dir]; }
+            getConnector(direction) { return this.connectors[direction]; }
+            getConnectorCount() { return this.connectors.filter(c => c).length; }
         }
-
-        class LoopixShift {
+        
+        class Loopix {
             constructor() {
                 this.canvas = document.getElementById('mainCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.darkOverlay = document.getElementById('darkOverlay');
                 this.gridSize = 6;
-                this.cellSize = 60;
+                this.cellSize = 50;
                 this.grid = [];
                 this.score = 0;
                 this.displayScore = 0;
-                this.highScore = parseInt(localStorage.getItem('loopixShiftHigh')) || 0;
+                this.highScore = parseInt(localStorage.getItem('loopixHigh')) || 0;
                 this.loops = 0;
-                this.moves = 0;
-                this.difficultyLevel = 0;
-                this.nextBlock = null;
-                this.selectedCell = null;
-                this.validMoves = [];
+                this.combo = 1;
+                this.maxCombo = parseInt(localStorage.getItem('loopixMaxCombo')) || 0;
+                this.previewBlocks = [null, null, null];
+                this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
                 this.isGameOver = false;
-                this.isProcessing = false;
+                this.isProcessingLoop = false;
                 this.particles = [];
+                this.lastLoopCells = new Set();
+                this.chainGlowColors = new Map();
+                this.tutorialStep = 0;
+                this.tutorialActive = false;
+                this.difficultyLevel = 0;
+                this.hammerMode = false;
+                this.magicMode = false;
+                this.hammerUsed = false;
+                this.magicUsed = false;
+                this.hammerAvailable = true;
+                this.magicAvailable = true;
+                this.nextHammerAt = 2000;
+                this.nextMagicAt = 2000;
+                this.selectedMagicBlock = null;
+                this.isRescueMode = false;
+                this.lastClickTime = 0;
+                this.clickDelay = 150;
+                this.isProcessingClick = false;
                 this.shakeIntensity = 0;
+                this.shakeDecay = 0.8;
                 this.gameContainer = document.getElementById('gameContainer');
-                this.comboColors = ['#4fc3f7', '#69f0ae', '#ffd54f', '#ff8a65', '#ff6b9d', '#e040fb'];
-                
-                this.audioCtx = null;
+                this.blockScaleAnimations = new Map();
+                this.slowMotionActive = false;
+                this.timeScale = 1;
+                this.dragActive = false;
+                this.dragSlot = -1;
+                this.dragStartX = 0;
+                this.dragStartY = 0;
+                this.dragRotated = false;
+                this.dragThreshold = 20;
+                this.chainPulsePhase = 0;
+                this.longestChain = null;
+                this.longestChainLength = 0;
+                this.bgHue = 170;
+                this.isNewRecord = false;
+                this.adInterval = null;
+                this.currentBonusType = null;
+                this.pendingLoops = null;
+                this.loopClearTimeout = null;
+                this.particlePool = [];
+                this.maxParticles = 200;
                 
                 this.init();
-                this.setupEvents();
+                this.setupAutoSave();
+                this.setupUIEvents();
+                I18N.updateUI();
+                this.updateUITexts();
+            }
+            
+            setupUIEvents() {
+                document.getElementById('settingsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.openSettings();
+                });
+                document.getElementById('hammerBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useHammer();
+                });
+                document.getElementById('magicBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useMagic();
+                });
+                document.getElementById('soundToggle').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.toggleSound();
+                });
+                document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                    this.setVolume(e.target.value);
+                });
+                document.getElementById('vibrationToggle').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.toggleVibration();
+                });
+                document.getElementById('newGameBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.newGame(); this.closeSettings();
+                });
+                document.getElementById('closeSettingsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeSettings();
+                });
+                document.getElementById('cancelAdBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.cancelAd();
+                });
+                document.getElementById('rescueHammerBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useRescueHammer();
+                });
+                document.getElementById('declineRescueBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.declineRescue();
+                });
+                document.getElementById('playAgainBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.newGame();
+                });
+                document.getElementById('downloadBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.downloadShareImage();
+                });
+                document.getElementById('shareBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.shareImage();
+                });
+                document.getElementById('closeShareBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeShareModal();
+                });
+                document.getElementById('closeMagicBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeMagicModal();
+                });
+                document.getElementById('tutorialSkip').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.skipTutorial();
+                });
+                document.querySelectorAll('.lang-option').forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        this.setLanguage(opt.dataset.lang);
+                    });
+                });
+                document.querySelectorAll('.tutorial-text').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (this.tutorialActive) this.nextTutorialStep();
+                    });
+                });
+            }
+            
+            updateUITexts() {
+                document.getElementById('hammerBtn').title = I18N.t('hammerHint');
+                document.getElementById('magicBtn').title = I18N.t('magicHint');
+                document.getElementById('hammerIndicator').textContent = I18N.t('hammerIndicator');
+                document.getElementById('magicIndicator').textContent = I18N.t('magicIndicator');
+                if (this.isGameOver) {
+                    document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
+                    document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
+                }
+            }
+            
+            setLanguage(lang) {
+                if (I18N.setLanguage(lang)) {
+                    this.updateUITexts();
+                    this.updateScore();
+                }
+            }
+            
+            canProcessClick() {
+                const now = Date.now();
+                if (now - this.lastClickTime < this.clickDelay || this.isProcessingClick) return false;
+                this.lastClickTime = now;
+                return true;
             }
             
             init() {
-                this.setupGrid();
-                this.spawnInitialBlocks();
-                this.generateNextBlock();
-                this.updateScore();
-                this.updateDifficultyIndicator();
+                if (!this.loadGame()) {
+                    this.updateScore();
+                    this.setupGrid();
+                    this.checkTutorial();
+                }
                 this.animate();
+                this.startBackgroundAnimation();
             }
             
-            getCurrentDifficulty() {
-                let level = 0;
-                for (let i = 3; i >= 0; i--) {
-                    if (this.score >= DIFFICULTY[i].minScore) {
-                        level = i;
-                        break;
-                    }
+            setupAutoSave() {
+                setInterval(() => {
+                    if (!this.isGameOver && !this.tutorialActive) this.saveGame();
+                }, 10000);
+                window.addEventListener('beforeunload', () => {
+                    if (!this.isGameOver && !this.tutorialActive) this.saveGame();
+                });
+            }
+            
+            saveGame() {
+                const saveData = {
+                    version: 2, score: this.score, loops: this.loops, combo: this.combo,
+                    maxCombo: this.maxCombo, difficultyLevel: this.difficultyLevel,
+                    hammerUsed: this.hammerUsed, magicUsed: this.magicUsed,
+                    hammerAvailable: this.hammerAvailable, magicAvailable: this.magicAvailable,
+                    nextHammerAt: this.nextHammerAt, nextMagicAt: this.nextMagicAt,
+                    grid: this.grid.map(row => row.map(block => block ? {
+                        type: block.type, variant: block.variant, rotation: block.rotation
+                    } : null)),
+                    previewBlocks: this.previewBlocks.map(block => block ? {
+                        type: block.type, variant: block.variant, rotation: block.rotation
+                    } : null),
+                    selectedSlot: this.selectedSlot
+                };
+                localStorage.setItem('loopixSave', JSON.stringify(saveData));
+            }
+            
+            loadGame() {
+                const saved = localStorage.getItem('loopixSave');
+                if (!saved) return false;
+                try {
+                    const data = JSON.parse(saved);
+                    this.score = data.score; this.displayScore = data.score;
+                    this.loops = data.loops; this.combo = data.combo;
+                    this.maxCombo = data.maxCombo; this.difficultyLevel = data.difficultyLevel;
+                    this.hammerUsed = data.hammerUsed; this.magicUsed = data.magicUsed || false;
+                    this.hammerAvailable = data.hammerAvailable; this.magicAvailable = data.magicAvailable !== false;
+                    this.nextHammerAt = data.nextHammerAt; this.nextMagicAt = data.nextMagicAt || 2000;
+                    this.grid = data.grid.map(row => row.map(blockData => {
+                        if (!blockData) return null;
+                        const block = new Block(blockData.type, blockData.variant);
+                        for (let r = 0; r < blockData.rotation / 90; r++) block.rotate();
+                        return block;
+                    }));
+                    this.previewBlocks = data.previewBlocks.map(blockData => {
+                        if (!blockData) return null;
+                        const block = new Block(blockData.type, blockData.variant);
+                        for (let r = 0; r < blockData.rotation / 90; r++) block.rotate();
+                        return block;
+                    });
+                    this.selectedSlot = data.selectedSlot;
+                    this.updateSlotClasses();
+                    this.renderPreviews();
+                    this.updateScore();
+                    this.findLongestChain();
+                    document.getElementById('hammerBtn').classList.toggle('disabled', this.hammerUsed);
+                    document.getElementById('magicBtn').classList.toggle('disabled', this.magicUsed);
+                    this.setupEvents();
+                    return true;
+                } catch (e) { return false; }
+            }
+            
+            startBackgroundAnimation() {
+                setInterval(() => {
+                    this.bgHue = (this.bgHue + 0.5) % 360;
+                    document.body.style.background = `linear-gradient(180deg, hsl(${this.bgHue}, 60%, 12%) 0%, hsl(${(this.bgHue + 30) % 360}, 55%, 18%) 100%)`;
+                }, 100);
+            }
+            
+            updateDifficultyByScore() {
+                if (this.score >= 5000) this.difficultyLevel = 3;
+                else if (this.score >= 2000) this.difficultyLevel = 2;
+                else if (this.score >= 500) this.difficultyLevel = 1;
+                else this.difficultyLevel = 0;
+            }
+            
+            checkBonusesAvailability() {
+                if (this.hammerUsed && this.score >= this.nextHammerAt) {
+                    this.hammerUsed = false;
+                    this.hammerAvailable = true;
+                    this.nextHammerAt = Math.floor(this.score / 2000) * 2000 + 2000;
+                    document.getElementById('hammerBtn').classList.remove('disabled');
                 }
-                return DIFFICULTY[level];
+                if (this.magicUsed && this.score >= this.nextMagicAt) {
+                    this.magicUsed = false;
+                    this.magicAvailable = true;
+                    this.nextMagicAt = Math.floor(this.score / 2000) * 2000 + 2000;
+                    document.getElementById('magicBtn').classList.remove('disabled');
+                }
             }
             
-            updateDifficultyIndicator() {
-                const diff = this.getCurrentDifficulty();
-                const indicator = document.getElementById('difficultyIndicator');
-                indicator.textContent = diff.name;
-                
-                if (this.score >= 5000) {
-                    indicator.style.color = '#ff8a65';
-                    indicator.style.textShadow = '0 0 10px #ff8a65';
-                } else if (this.score >= 2000) {
-                    indicator.style.color = '#ffd54f';
-                    indicator.style.textShadow = '0 0 10px #ffd54f';
-                } else if (this.score >= 500) {
-                    indicator.style.color = '#69f0ae';
-                    indicator.style.textShadow = '0 0 10px #69f0ae';
+            toggleSound() { audioManager.toggle(); }
+            setVolume(v) { audioManager.setVolume(v); }
+            toggleVibration() { vibrationManager.toggle(); }
+            
+            addScreenShake(intensity) { this.shakeIntensity = Math.min(intensity, 15); }
+            
+            updateScreenShake() {
+                if (this.shakeIntensity > 0.5) {
+                    this.gameContainer.style.transform = `translate(${(Math.random() - 0.5) * this.shakeIntensity * 2}px, ${(Math.random() - 0.5) * this.shakeIntensity * 2}px)`;
+                    this.shakeIntensity *= this.shakeDecay;
                 } else {
-                    indicator.style.color = '#4fc3f7';
-                    indicator.style.textShadow = '0 0 10px #4fc3f7';
+                    this.shakeIntensity = 0;
+                    this.gameContainer.style.transform = '';
                 }
             }
+            
+            addBlockScaleEffect(x, y) { this.blockScaleAnimations.set(`${x},${y}`, 1.3); }
+            
+            updateBlockScaleAnimations() {
+                for (const [key, scale] of this.blockScaleAnimations) {
+                    const newScale = scale * 0.85;
+                    if (newScale > 1.05) this.blockScaleAnimations.set(key, newScale);
+                    else this.blockScaleAnimations.delete(key);
+                }
+            }
+            
+            activateSlowMotion(duration = 1000, timeScale = 0.3) {
+                this.slowMotionActive = true;
+                this.timeScale = timeScale;
+                this.canvas.classList.add('slow-motion-active');
+                setTimeout(() => {
+                    this.slowMotionActive = false;
+                    this.timeScale = 1;
+                    this.canvas.classList.remove('slow-motion-active');
+                }, duration * timeScale);
+            }
+            
+            activateDarkOverlay(duration = 1000) {
+                this.darkOverlay.classList.add('active');
+                setTimeout(() => this.darkOverlay.classList.remove('active'), duration);
+            }
+            
+            animateScore(targetScore) {
+                if (this.scoreAnimationFrame) cancelAnimationFrame(this.scoreAnimationFrame);
+                const startScore = this.displayScore;
+                const diff = targetScore - startScore;
+                const startTime = performance.now();
+                const scoreElement = document.getElementById('score');
+                scoreElement.classList.add('animate');
+                setTimeout(() => scoreElement.classList.remove('animate'), 300);
+                
+                const animate = (currentTime) => {
+                    const progress = Math.min((currentTime - startTime) / 500, 1);
+                    this.displayScore = Math.floor(startScore + diff * (1 - Math.pow(1 - progress, 4)));
+                    document.getElementById('score').textContent = this.displayScore;
+                    if (progress < 1) this.scoreAnimationFrame = requestAnimationFrame(animate);
+                    else { this.displayScore = targetScore; document.getElementById('score').textContent = targetScore; }
+                };
+                this.scoreAnimationFrame = requestAnimationFrame(animate);
+            }
+            
+            checkTutorial() {
+                if (!localStorage.getItem('loopixTutorial')) this.startTutorial();
+                else { this.placeInitialBlocks(); this.generateNewSet(); this.setupEvents(); }
+            }
+            
+            startTutorial() {
+                this.tutorialActive = true;
+                this.tutorialStep = 1;
+                document.getElementById('tutorialOverlay').classList.add('show');
+                this.setupTutorialField();
+                this.setupEvents();
+                setTimeout(() => this.updateTutorialStep(), 100);
+            }
+            
+            setupTutorialField() {
+                this.difficultyLevel = 0;
+                this.setupGrid();
+                this.grid[2][2] = new Block('CORNER', 1);
+                this.grid[2][3] = new Block('CORNER', 2);
+                this.grid[3][3] = new Block('CORNER', 3);
+                this.previewBlocks[0] = new Block('CORNER', 1);
+                this.previewBlocks[1] = null;
+                this.previewBlocks[2] = null;
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+                requestAnimationFrame(() => { this.renderPreviews(); });
+            }
+            
+            updateTutorialStep() {
+                document.querySelectorAll('.tutorial-step').forEach(el => el.classList.remove('active'));
+                document.getElementById('step' + this.tutorialStep).classList.add('active');
+                const panel = document.getElementById('previewPanel');
+                const canvas = document.getElementById('mainCanvas');
+                const slots = document.querySelectorAll('.preview-slot');
+                const target = document.getElementById('tutorialTarget');
+                
+                slots.forEach(slot => { slot.classList.remove('tutorial-active', 'disabled'); slot.style.pointerEvents = 'none'; });
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = 'none';
+                target.style.display = 'none';
+                
+                if (this.tutorialStep === 1) {
+                    const step1 = document.getElementById('step1');
+                    const rect = panel.getBoundingClientRect();
+                    step1.style.top = rect.top - 70 + 'px';
+                    step1.style.left = '50%';
+                    step1.style.transform = 'translateX(-50%)';
+                    document.getElementById('slot0').classList.add('tutorial-active');
+                    document.getElementById('slot0').style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 2) {
+                    const step2 = document.getElementById('step2');
+                    const rect = document.getElementById('slot0').getBoundingClientRect();
+                    step2.style.top = rect.top - 70 + 'px';
+                    step2.style.left = '50%';
+                    step2.style.transform = 'translateX(-50%)';
+                    slots.forEach((s, i) => { if (i !== 0) s.classList.add('disabled'); });
+                    const slot0 = document.getElementById('slot0');
+                    slot0.classList.add('tutorial-active', 'selected');
+                    slot0.style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 3) {
+                    const step3 = document.getElementById('step3');
+                    const canvasRect = canvas.getBoundingClientRect();
+                    step3.style.top = (canvasRect.top + 10) + 'px';
+                    step3.style.left = '50%';
+                    step3.style.transform = 'translateX(-50%)';
+                    slots.forEach(s => s.classList.add('disabled'));
+                    canvas.classList.add('canvas-tutorial');
+                    canvas.style.pointerEvents = 'auto';
+                    target.style.width = this.cellSize + 'px';
+                    target.style.height = this.cellSize + 'px';
+                    target.style.left = (canvasRect.left + 2 * this.cellSize) + 'px';
+                    target.style.top = (canvasRect.top + 3 * this.cellSize) + 'px';
+                    target.style.display = 'block';
+                }
+            }
+            
+            nextTutorialStep() {
+                this.tutorialStep++;
+                if (this.tutorialStep > 3) this.endTutorial();
+                else this.updateTutorialStep();
+            }
+            
+            endTutorial() {
+                this.tutorialActive = false;
+                document.getElementById('tutorialOverlay').classList.remove('show');
+                document.getElementById('tutorialTarget').style.display = 'none';
+                localStorage.setItem('loopixTutorial', 'true');
+                document.querySelectorAll('.preview-slot').forEach(s => {
+                    s.classList.remove('tutorial-active', 'disabled');
+                    s.style.pointerEvents = '';
+                });
+                const canvas = document.getElementById('mainCanvas');
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = '';
+                this.difficultyLevel = 0;
+                this.setupGrid();
+                this.placeInitialBlocks();
+                this.generateNewSet();
+            }
+            
+            skipTutorial() { this.endTutorial(); }
+            
+            placeInitialBlocks() {
+                const innerPositions = [];
+                for (let y = 1; y < this.gridSize - 1; y++)
+                    for (let x = 1; x < this.gridSize - 1; x++)
+                        innerPositions.push({x, y});
+                for (let i = innerPositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [innerPositions[i], innerPositions[j]] = [innerPositions[j], innerPositions[i]];
+                }
+                const numInitial = 2 + Math.floor(Math.random() * 2);
+                for (let i = 0; i < numInitial && i < innerPositions.length; i++) {
+                    const pos = innerPositions[i];
+                    const block = this.randomBlock();
+                    for (let r = 0; r < Math.floor(Math.random() * 4); r++) block.rotate();
+                    this.grid[pos.y][pos.x] = block;
+                }
+                this.findLongestChain();
+            }
+            
+            openSettings() { 
+                if (!this.canProcessClick()) return;
+                document.getElementById('settingsModal').classList.add('show');
+                I18N.updateUI();
+            }
+            closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
             
             setupGrid() {
                 this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
             }
             
-            spawnInitialBlocks() {
-                const count = 3;
-                const positions = [];
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        positions.push({x, y});
+            generateNewSet() {
+                for (let i = 0; i < 3; i++) {
+                    if (this.previewBlocks[i] === null) {
+                        this.previewBlocks[i] = this.randomBlock();
                     }
                 }
-                
-                for (let i = positions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [positions[i], positions[j]] = [positions[j], positions[i]];
-                }
-                
-                for (let i = 0; i < count; i++) {
-                    const pos = positions[i];
-                    const block = this.createRandomBlock();
-                    this.grid[pos.y][pos.x] = block;
-                }
-            }
-            
-            createRandomBlock() {
-                const diff = this.getCurrentDifficulty();
-                const types = diff.types;
-                const type = types[Math.floor(Math.random() * types.length)];
-                const maxVariant = type === 'STRAIGHT' ? 2 : type === 'CROSS' ? 1 : 4;
-                const variant = type === 'CROSS' ? 0 : Math.floor(Math.random() * maxVariant);
-                const block = new Block(type, variant);
-                const rotations = Math.floor(Math.random() * 4);
-                for (let i = 0; i < rotations; i++) block.rotate();
-                return block;
-            }
-            
-            generateNextBlock() {
-                const diff = this.getCurrentDifficulty();
-                const types = diff.types;
-                const type = types[Math.floor(Math.random() * types.length)];
-                const maxVariant = type === 'STRAIGHT' ? 2 : type === 'CROSS' ? 1 : 4;
-                const variant = type === 'CROSS' ? 0 : Math.floor(Math.random() * maxVariant);
-                this.nextBlock = new Block(type, variant);
-                const rotations = Math.floor(Math.random() * 4);
-                for (let i = 0; i < rotations; i++) this.nextBlock.rotate();
-            }
-            
-            playSound(freq, duration = 0.1, type = 'sine') {
-                try {
-                    if (!this.audioCtx) {
-                        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    }
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    osc.type = type;
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(this.audioCtx.destination);
-                    osc.start();
-                    osc.stop(this.audioCtx.currentTime + duration);
-                } catch(e) {}
-            }
-            
-            setupEvents() {
-                document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
-                document.getElementById('newGameBtn').addEventListener('click', () => { this.newGame(); this.closeSettings(); });
-                document.getElementById('closeSettingsBtn').addEventListener('click', () => this.closeSettings());
-                document.getElementById('playAgainBtn').addEventListener('click', () => this.newGame());
-                
-                this.canvas.addEventListener('pointerdown', (e) => {
-                    e.preventDefault();
-                    this.onCanvasClick(e);
-                });
-                
-                this.canvas.addEventListener('pointermove', (e) => {
-                    e.preventDefault();
-                    this.onCanvasMove(e);
-                });
-            }
-            
-            openSettings() {
-                document.getElementById('settingsModal').classList.add('show');
-            }
-            
-            closeSettings() {
-                document.getElementById('settingsModal').classList.remove('show');
-            }
-            
-            onCanvasMove(e) {
-                if (this.isGameOver || this.isProcessing) return;
-                
-                const rect = this.canvas.getBoundingClientRect();
-                const gx = Math.floor((e.clientX - rect.left) / this.cellSize);
-                const gy = Math.floor((e.clientY - rect.top) / this.cellSize);
-                
-                if (this.selectedCell) {
-                    if (gx === this.selectedCell.x && gy === this.selectedCell.y) {
-                        this.canvas.style.cursor = 'pointer';
-                    } else if (this.isValidTarget(gx, gy)) {
-                        this.canvas.style.cursor = 'pointer';
-                    } else {
-                        this.canvas.style.cursor = 'default';
-                    }
-                } else if (this.grid[gy]?.[gx]) {
-                    this.canvas.style.cursor = 'pointer';
-                } else {
-                    this.canvas.style.cursor = 'default';
-                }
-            }
-            
-            onCanvasClick(e) {
-                if (this.isGameOver || this.isProcessing) return;
-                
-                const rect = this.canvas.getBoundingClientRect();
-                const gx = Math.floor((e.clientX - rect.left) / this.cellSize);
-                const gy = Math.floor((e.clientY - rect.top) / this.cellSize);
-                
-                if (gx < 0 || gx >= this.gridSize || gy < 0 || gy >= this.gridSize) return;
-                
-                if (this.selectedCell) {
-                    if (gx === this.selectedCell.x && gy === this.selectedCell.y) {
-                        this.rotateSelectedBlock();
-                        return;
-                    }
-                    
-                    if (this.isValidTarget(gx, gy)) {
-                        this.moveBlock(this.selectedCell.x, this.selectedCell.y, gx, gy);
-                        return;
-                    }
-                    
-                    if (this.grid[gy]?.[gx]) {
-                        this.selectedCell = {x: gx, y: gy};
-                        this.validMoves = this.getValidMoves(gx, gy);
-                        this.playSound(660, 0.08, 'sine');
-                    } else {
-                        this.selectedCell = null;
-                        this.validMoves = [];
-                    }
-                } else if (this.grid[gy]?.[gx]) {
-                    this.selectedCell = {x: gx, y: gy};
-                    this.validMoves = this.getValidMoves(gx, gy);
-                    this.playSound(660, 0.08, 'sine');
-                }
-            }
-            
-            rotateSelectedBlock() {
-                const block = this.grid[this.selectedCell.y][this.selectedCell.x];
-                block.rotate();
-                this.playSound(880, 0.06, 'sine');
-                this.validMoves = this.getValidMoves(this.selectedCell.x, this.selectedCell.y);
-            }
-            
-            getValidMoves(x, y) {
-                const moves = [];
-                for (let ny = 0; ny < this.gridSize; ny++) {
-                    for (let nx = 0; nx < this.gridSize; nx++) {
-                        if (nx === x && ny === y) continue;
-                        if (!this.grid[ny][nx]) {
-                            moves.push({x: nx, y: ny});
-                        }
-                    }
-                }
-                return moves;
-            }
-            
-            isValidTarget(x, y) {
-                return this.validMoves.some(m => m.x === x && m.y === y);
-            }
-            
-            moveBlock(fromX, fromY, toX, toY) {
-                const block = this.grid[fromY][fromX];
-                this.grid[fromY][fromX] = null;
-                this.grid[toY][toX] = block;
-                this.moves++;
-                this.selectedCell = null;
-                this.validMoves = [];
-                
-                this.playSound(440, 0.1, 'sine');
-                this.createMoveParticles(toX, toY, block.color);
-                this.addScreenShake(2);
-                
-                const loops = this.findLoops();
-                if (loops.length > 0) {
-                    this.isProcessing = true;
-                    this.activateDarkOverlay(800);
-                    const totalCells = loops.reduce((sum, l) => sum + l.size, 0);
-                    const points = this.calculateLoopPoints(loops);
-                    this.showComboPopup(totalCells, points);
-                    
-                    const freq = 330 + loops.length * 110;
-                    this.playSound(freq, 0.3, 'triangle');
-                    
-                    setTimeout(() => {
-                        this.clearLoops(loops);
-                        this.isProcessing = false;
-                        this.updateScore();
-                        this.updateDifficultyIndicator();
-                        this.checkGameOver();
-                    }, 800);
-                } else {
-                    this.spawnNewBlock();
-                    this.updateScore();
-                    this.updateDifficultyIndicator();
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+                this.renderPreviews();
+                if (!this.isProcessingLoop && !this.canPlaceAny()) {
                     this.checkGameOver();
                 }
             }
             
-            calculateLoopPoints(loops) {
-                let total = 0;
-                loops.forEach(loop => {
-                    loop.forEach(key => {
-                        const [x, y] = key.split(',').map(Number);
-                        if (this.grid[y]?.[x]) {
-                            total += this.grid[y][x].price * loop.size;
-                        }
-                    });
-                });
-                return total;
+            checkGameOver() {
+                if (this.isProcessingLoop || this.canPlaceAny()) return;
+                this.isGameOver = true;
+                
+                if ((this.hammerAvailable && !this.hammerUsed) || (this.magicAvailable && !this.magicUsed)) {
+                    document.getElementById('rescueModal').classList.add('show');
+                    I18N.updateUI();
+                } else {
+                    this.showGameOver();
+                }
             }
             
-            spawnNewBlock() {
-                if (!this.nextBlock) return;
+            showGameOver() {
+                document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
+                document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
+                localStorage.removeItem('loopixSave');
                 
-                const emptyCells = [];
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        if (!this.grid[y][x]) {
-                            emptyCells.push({x, y});
-                        }
+                if (this.isNewRecord) {
+                    this.generateShareImage();
+                    document.getElementById('shareModal').classList.add('show');
+                    I18N.updateUI();
+                    this.isNewRecord = false;
+                } else {
+                    document.getElementById('gameOverModal').classList.add('show');
+                }
+            }
+            
+            useRescueHammer() {
+                document.getElementById('rescueModal').classList.remove('show');
+                this.isGameOver = false;
+                this.useHammer();
+            }
+            
+            declineRescue() {
+                document.getElementById('rescueModal').classList.remove('show');
+                this.showGameOver();
+            }
+            
+            updateSlotClasses() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    slot.classList.remove('selected', 'has-block', 'empty', 'dragging');
+                    if (!this.previewBlocks[i]) slot.classList.add('empty');
+                    else {
+                        slot.classList.add('has-block');
+                        if (this.selectedSlot === i) slot.classList.add('selected');
                     }
                 }
+            }
+            
+            randomBlock() {
+                const baseWeight = 100;
+                let weights = { 'STRAIGHT': baseWeight, 'CORNER': baseWeight, 'T_SHAPE': 0, 'CROSS': 0 };
+                if (this.difficultyLevel >= 1) weights['T_SHAPE'] = baseWeight / 2;
+                if (this.difficultyLevel >= 2) { weights['T_SHAPE'] = baseWeight; weights['CROSS'] = baseWeight / 4; }
+                if (this.difficultyLevel >= 3) weights['CROSS'] = baseWeight / 4;
                 
-                if (emptyCells.length === 0) return;
+                const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+                let random = Math.random() * totalWeight;
                 
-                const pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-                this.grid[pos.y][pos.x] = this.nextBlock;
-                this.createSpawnParticles(pos.x, pos.y);
+                for (const type in weights) {
+                    if (weights[type] === 0) continue;
+                    random -= weights[type];
+                    if (random <= 0) {
+                        const variant = BLOCK_TYPES[type].variants ? 
+                            Math.floor(Math.random() * BLOCK_TYPES[type].variants.length) : 0;
+                        return new Block(type, variant);
+                    }
+                }
+                return new Block('STRAIGHT', 0);
+            }
+            
+            setupEvents() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    const startDrag = (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        const c = e.touches ? e.touches[0] : e;
+                        this.startDrag(i, c.clientX, c.clientY);
+                    };
+                    slot.addEventListener('mousedown', startDrag);
+                    slot.addEventListener('touchstart', startDrag, { passive: false });
+                }
                 
-                this.generateNextBlock();
+                const onMove = (e) => {
+                    if (!this.dragActive) return;
+                    e.preventDefault();
+                    const c = e.touches ? e.touches[0] : e;
+                    this.updateDrag(c.clientX, c.clientY);
+                };
+                const onEnd = (e) => { if (this.dragActive) { e.preventDefault(); this.endDrag(); } };
                 
-                const loops = this.findLoops();
-                if (loops.length > 0) {
-                    this.isProcessing = true;
-                    this.activateDarkOverlay(800);
-                    const totalCells = loops.reduce((sum, l) => sum + l.size, 0);
-                    const points = this.calculateLoopPoints(loops);
-                    this.showComboPopup(totalCells, points);
-                    this.playSound(440, 0.3, 'triangle');
-                    
-                    setTimeout(() => {
-                        this.clearLoops(loops);
-                        this.isProcessing = false;
-                        this.updateScore();
-                        this.updateDifficultyIndicator();
-                        this.checkGameOver();
-                    }, 800);
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('mouseup', onEnd);
+                window.addEventListener('touchend', onEnd);
+                window.addEventListener('touchcancel', onEnd);
+                
+                this.canvas.addEventListener('pointermove', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.onCanvasMove(e);
+                }, { passive: false });
+                this.canvas.addEventListener('pointerleave', () => this.onCanvasLeave());
+                this.canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.onCanvasClick(e);
+                }, { passive: false });
+            }
+            
+            startDrag(idx, cx, cy) {
+                if (this.isGameOver || !this.previewBlocks[idx]) return;
+                this.dragActive = true;
+                this.dragSlot = idx;
+                this.dragStartSlot = idx;
+                this.dragStartX = cx;
+                this.dragStartY = cy;
+                this.dragRotated = false;
+                this.updateSlotClasses();
+                this.renderPreviews();
+            }
+            
+            updateDrag(cx, cy) {
+                if (!this.dragActive || this.dragRotated) return;
+                if (Math.hypot(cx - this.dragStartX, cy - this.dragStartY) >= this.dragThreshold) {
+                    this.previewBlocks[this.dragSlot].rotate();
+                    audioManager.playRotate();
+                    vibrationManager.lightVibration();
+                    this.renderPreviews();
+                    this.dragRotated = true;
+                    if (this.tutorialActive && this.tutorialStep === 2 && this.dragSlot === 0) {
+                        const b = this.previewBlocks[0];
+                        if (b.connectors[0] === 1 && b.connectors[1] === 1 && b.connectors[2] === 0 && b.connectors[3] === 0)
+                            this.nextTutorialStep();
+                    }
                 }
             }
             
-            findLoops() {
-                const visited = new Set();
-                const loops = [];
+            endDrag() {
+                if (!this.dragActive) return;
+                const slotIdx = this.dragStartSlot;
+                const wasDrag = this.dragRotated;
+                this.dragActive = false;
+                this.dragSlot = -1;
+                if (wasDrag) { this.selectedSlot = slotIdx; this.updateSlotClasses(); }
+                else this.handleSlotClick(slotIdx);
+                this.dragStartSlot = -1;
+                this.dragRotated = false;
+                this.updateSlotClasses();
+            }
+            
+            handleSlotClick(idx) {
+                if (!this.canProcessClick() || this.isGameOver || !this.previewBlocks[idx]) return;
+                this.isProcessingClick = true;
                 
+                if (this.tutorialActive) {
+                    if (this.tutorialStep === 1 && idx === 0) {
+                        this.selectedSlot = idx;
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                    }
+                    this.isProcessingClick = false;
+                    return;
+                }
+                
+                if (this.selectedSlot === idx) {
+                    this.previewBlocks[idx].rotate();
+                    audioManager.playRotate();
+                    vibrationManager.lightVibration();
+                } else this.selectedSlot = idx;
+                
+                this.updateSlotClasses();
+                this.renderPreviews();
+                setTimeout(() => this.isProcessingClick = false, 50);
+            }
+            
+            onCanvasMove(e) {
+                if (this.isGameOver) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const gx = Math.floor((e.clientX - rect.left) / this.cellSize);
+                const gy = Math.floor((e.clientY - rect.top) / this.cellSize);
+                this.hoverCell = (gx >= 0 && gx < this.gridSize && gy >= 0 && gy < this.gridSize) ? {x: gx, y: gy} : {x: -1, y: -1};
+                this.canvas.classList.toggle('hammer-target', this.hammerMode && this.grid[gy]?.[gx]);
+                this.canvas.classList.toggle('magic-target', this.magicMode && !this.grid[gy]?.[gx]);
+            }
+            
+            onCanvasLeave() { this.hoverCell = {x: -1, y: -1}; this.canvas.classList.remove('hammer-target', 'magic-target'); }
+            
+            onCanvasClick(e) {
+                if (!this.canProcessClick() || this.isGameOver) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const gx = Math.floor((e.clientX - rect.left) / this.cellSize);
+                const gy = Math.floor((e.clientY - rect.top) / this.cellSize);
+                
+                if (this.hammerMode) {
+                    if (this.grid[gy]?.[gx]) this.removeBlock(gx, gy);
+                    return;
+                }
+                
+                if (this.magicMode && this.selectedMagicBlock && !this.grid[gy]?.[gx]) {
+                    this.placeMagicBlock(gx, gy);
+                    return;
+                }
+                
+                if (this.selectedSlot === null) return;
+                if (this.tutorialActive && this.tutorialStep === 3) {
+                    if (gx === 2 && gy === 3 && !this.grid[gy][gx]) this.placeBlock(gx, gy, this.selectedSlot);
+                    return;
+                }
+                if (gx >= 0 && gx < this.gridSize && gy >= 0 && gy < this.gridSize && !this.grid[gy][gx])
+                    this.placeBlock(gx, gy, this.selectedSlot);
+            }
+            
+            placeBlock(x, y, slotIdx) {
+                const block = this.previewBlocks[slotIdx];
+                this.grid[y][x] = block;
+                this.previewBlocks[slotIdx] = null;
+                audioManager.playPlace(block.type);
+                this.addBlockScaleEffect(x, y);
+                if (this.selectedSlot === slotIdx) this.selectedSlot = null;
+                this.findLongestChain();
+                
+                if (this.tutorialActive && this.tutorialStep === 3) {
+                    const loops = this.findLoops();
+                    if (loops.length) {
+                        this.isProcessingLoop = true;
+                        this.combo = loops.length;
+                        this.assignGlowColors(loops);
+                        this.showComboPopup(loops);
+                        this.scheduleLoopClear(loops, () => {
+                            this.nextTutorialStep();
+                        });
+                    }
+                    if (this.previewBlocks[slotIdx] === null) {
+                        this.previewBlocks[slotIdx] = this.randomBlock();
+                    }
+                    this.updateSlotClasses();
+                    this.renderPreviews();
+                    this.updateScore();
+                    return;
+                }
+                
+                const loops = this.findLoops();
+                if (loops.length) {
+                    this.isProcessingLoop = true;
+                    const maxSize = Math.max(...loops.map(l => l.size));
+                    this.combo = maxSize;
+                    if (this.combo > this.maxCombo) {
+                        this.maxCombo = this.combo;
+                        localStorage.setItem('loopixMaxCombo', this.maxCombo);
+                    }
+                    this.addScreenShake(Math.min(maxSize * 2, 12));
+                    if (maxSize >= 5) {
+                        this.activateSlowMotion(Math.min(maxSize * 200, 2000), 0.4);
+                        this.activateDarkOverlay(Math.min(maxSize * 200, 2000) * 0.4);
+                    } else this.activateDarkOverlay(500);
+                    audioManager.playCombo(maxSize);
+                    vibrationManager.comboVibration(maxSize);
+                    this.assignGlowColors(loops);
+                    this.showComboPopup(loops);
+                    this.scheduleLoopClear(loops);
+                    this.updateDifficultyByScore();
+                } else {
+                    this.combo = 1;
+                    this.addScreenShake(2);
+                }
+                
+                if (this.previewBlocks[slotIdx] === null) {
+                    this.previewBlocks[slotIdx] = this.randomBlock();
+                }
+                
+                this.updateSlotClasses();
+                this.renderPreviews();
+                this.updateScore();
+                
+                if (!this.isProcessingLoop && !this.canPlaceAny()) {
+                    this.checkGameOver();
+                }
+            }
+            
+            placeMagicBlock(x, y) {
+                const block = new Block(this.selectedMagicBlock.type, this.selectedMagicBlock.variant);
+                for (let i = 0; i < this.selectedMagicBlock.rotation / 90; i++) block.rotate();
+                this.grid[y][x] = block;
+                audioManager.playMagic();
+                vibrationManager.magicVibration();
+                this.addBlockScaleEffect(x, y);
+                this.magicMode = false;
+                this.selectedMagicBlock = null;
+                document.getElementById('magicIndicator').classList.remove('show');
+                this.canvas.classList.remove('magic-mode', 'magic-target');
+                
+                const loops = this.findLoops();
+                if (loops.length) {
+                    this.isProcessingLoop = true;
+                    const maxSize = Math.max(...loops.map(l => l.size));
+                    this.combo = maxSize;
+                    if (this.combo > this.maxCombo) {
+                        this.maxCombo = this.combo;
+                        localStorage.setItem('loopixMaxCombo', this.maxCombo);
+                    }
+                    this.addScreenShake(Math.min(maxSize * 2, 12));
+                    if (maxSize >= 5) {
+                        this.activateSlowMotion(Math.min(maxSize * 200, 2000), 0.4);
+                        this.activateDarkOverlay(Math.min(maxSize * 200, 2000) * 0.4);
+                    } else this.activateDarkOverlay(500);
+                    audioManager.playCombo(maxSize);
+                    vibrationManager.comboVibration(maxSize);
+                    this.assignGlowColors(loops);
+                    this.showComboPopup(loops);
+                    this.scheduleLoopClear(loops);
+                    this.updateDifficultyByScore();
+                } else {
+                    this.combo = 1;
+                    this.addScreenShake(2);
+                }
+                
+                this.updateScore();
+                
+                if (!this.isProcessingLoop && !this.canPlaceAny()) {
+                    this.checkGameOver();
+                }
+            }
+            
+            scheduleLoopClear(loops, callback = null) {
+                if (this.loopClearTimeout) {
+                    clearTimeout(this.loopClearTimeout);
+                }
+                this.pendingLoops = loops;
+                
+                this.loopClearTimeout = setTimeout(() => {
+                    this.clearLoops(this.pendingLoops);
+                    this.pendingLoops = null;
+                    this.loopClearTimeout = null;
+                    this.isProcessingLoop = false;
+                    
+                    if (!this.canPlaceAny()) {
+                        this.checkGameOver();
+                    }
+                    
+                    if (callback) callback();
+                }, 1000);
+            }
+            
+            findLongestChain() {
+                const visited = new Set();
+                let maxChain = null, maxLen = 0;
                 for (let y = 0; y < this.gridSize; y++) {
                     for (let x = 0; x < this.gridSize; x++) {
                         const key = `${x},${y}`;
                         if (!this.grid[y][x] || visited.has(key)) continue;
-                        
-                        const component = this.findComponent(x, y);
-                        component.forEach(k => visited.add(k));
-                        
-                        if (this.isClosedLoop(component) && component.size >= 4) {
-                            loops.push(component);
+                        const comp = this.findConnectedComponent(x, y);
+                        comp.forEach(k => visited.add(k));
+                        if (!this.isClosedLoop(comp) && comp.size > maxLen) {
+                            maxLen = comp.size;
+                            maxChain = comp;
                         }
                     }
                 }
-                return loops;
+                this.longestChain = maxChain;
+                this.longestChainLength = maxLen;
             }
             
-            findComponent(sx, sy) {
-                const component = new Set();
-                const queue = [{x: sx, y: sy}];
-                const visited = new Set([`${sx},${sy}`]);
+            useHammer() {
+                if (!this.canProcessClick() || this.hammerUsed || this.isGameOver || this.tutorialActive) return;
+                this.currentBonusType = 'hammer';
+                document.getElementById('adModal').classList.add('show');
+                I18N.updateUI();
+                let timer = 5;
+                const timerEl = document.getElementById('adTimer');
+                timerEl.textContent = timer;
+                this.adInterval = setInterval(() => {
+                    timer--;
+                    timerEl.textContent = timer;
+                    if (timer <= 0) {
+                        clearInterval(this.adInterval);
+                        document.getElementById('adModal').classList.remove('show');
+                        this.activateHammer();
+                    }
+                }, 1000);
+            }
+            
+            useMagic() {
+                if (!this.canProcessClick() || this.magicUsed || this.isGameOver || this.tutorialActive) return;
+                this.currentBonusType = 'magic';
+                document.getElementById('adModal').classList.add('show');
+                I18N.updateUI();
+                let timer = 5;
+                const timerEl = document.getElementById('adTimer');
+                timerEl.textContent = timer;
+                this.adInterval = setInterval(() => {
+                    timer--;
+                    timerEl.textContent = timer;
+                    if (timer <= 0) {
+                        clearInterval(this.adInterval);
+                        document.getElementById('adModal').classList.remove('show');
+                        this.showMagicBlockSelector();
+                    }
+                }, 1000);
+            }
+            
+            cancelAd() {
+                if (this.adInterval) { clearInterval(this.adInterval); this.adInterval = null; }
+                document.getElementById('adModal').classList.remove('show');
+                this.currentBonusType = null;
+            }
+            
+            activateHammer() {
+                this.hammerMode = true;
+                this.hammerUsed = true;
+                this.hammerAvailable = false;
+                document.getElementById('hammerBtn').classList.add('disabled');
+                document.getElementById('hammerIndicator').classList.add('show');
+                this.canvas.classList.add('hammer-mode');
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+            }
+            
+            showMagicBlockSelector() {
+                this.magicUsed = true;
+                this.magicAvailable = false;
+                document.getElementById('magicBtn').classList.add('disabled');
                 
-                while (queue.length) {
-                    const {x, y} = queue.shift();
-                    const block = this.grid[y][x];
-                    if (!block) continue;
-                    component.add(`${x},${y}`);
-                    
-                    const dirs = [[0,-1,0,2], [1,0,1,3], [0,1,2,0], [-1,0,3,1]];
-                    for (const [dx, dy, dir, opp] of dirs) {
-                        if (!block.getConnector(dir)) continue;
-                        const nx = x + dx, ny = y + dy;
-                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) continue;
-                        const nb = this.grid[ny][nx];
-                        if (!nb || !nb.getConnector(opp)) continue;
-                        const nk = `${nx},${ny}`;
-                        if (!visited.has(nk)) {
-                            visited.add(nk);
-                            queue.push({x: nx, y: ny});
-                        }
+                const grid = document.getElementById('magicBlocksGrid');
+                grid.innerHTML = '';
+                
+                const blockTypes = ['STRAIGHT', 'CORNER', 'T_SHAPE', 'CROSS'];
+                blockTypes.forEach(type => {
+                    const variants = BLOCK_TYPES[type].variants ? BLOCK_TYPES[type].variants.length : 1;
+                    for (let v = 0; v < variants; v++) {
+                        const block = new Block(type, v);
+                        const div = document.createElement('div');
+                        div.className = 'magic-block-option';
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 50;
+                        canvas.height = 50;
+                        const ctx = canvas.getContext('2d');
+                        this.drawBlock(ctx, block, 0, 0, 50, false, true);
+                        div.appendChild(canvas);
+                        div.onclick = () => {
+                            this.selectedMagicBlock = block;
+                            document.getElementById('magicBlockModal').classList.remove('show');
+                            this.activateMagicMode();
+                        };
+                        grid.appendChild(div);
                     }
-                }
-                return component;
+                });
+                
+                document.getElementById('magicBlockModal').classList.add('show');
             }
             
-            isClosedLoop(component) {
-                if (component.size < 4) return false;
-                for (const key of component) {
-                    const [x, y] = key.split(',').map(Number);
-                    const block = this.grid[y][x];
-                    if (!block) return false;
-                    
-                    const dirs = [[0,-1,0,2], [1,0,1,3], [0,1,2,0], [-1,0,3,1]];
+            closeMagicModal() {
+                document.getElementById('magicBlockModal').classList.remove('show');
+                this.selectedMagicBlock = null;
+                if (!this.magicUsed) {
+                    this.magicUsed = false;
+                    this.magicAvailable = true;
+                    document.getElementById('magicBtn').classList.remove('disabled');
+                }
+            }
+            
+            activateMagicMode() {
+                this.magicMode = true;
+                document.getElementById('magicIndicator').classList.add('show');
+                this.canvas.classList.add('magic-mode');
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+            }
+            
+            removeBlock(x, y) {
+                this.createExplosion(x, y, '#ffd54f', 'hammer');
+                this.grid[y][x] = null;
+                audioManager.playClear();
+                this.hammerMode = false;
+                this.canvas.classList.remove('hammer-mode', 'hammer-target');
+                document.getElementById('hammerIndicator').classList.remove('show');
+                this.addScreenShake(3);
+                this.findLongestChain();
+                if (!this.isProcessingLoop && !this.canPlaceAny()) {
+                    this.checkGameOver();
+                }
+            }
+            
+            showComboPopup(loops) {
+                const popup = document.getElementById('comboPopup');
+                const textEl = document.getElementById('comboText');
+                const countEl = document.getElementById('comboCount');
+                const total = loops.reduce((s, l) => s + l.size, 0);
+                const phrases = getComboPhrases();
+                textEl.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+                textEl.style.color = COMBO_COLORS[Math.floor(Math.random() * COMBO_COLORS.length)];
+                countEl.textContent = `${I18N.t('comboTimes')}${total}`;
+                countEl.style.color = textEl.style.color;
+                popup.classList.remove('hide');
+                popup.classList.add('show');
+                setTimeout(() => { popup.classList.remove('show'); popup.classList.add('hide'); }, 2000);
+            }
+            
+            canPlaceAny() { 
+                return this.grid.some(row => row.some(cell => !cell)); 
+            }
+            
+            isClosedLoop(comp) {
+                if (comp.size < 2) return false;
+                for (const key of comp) {
+                    const [cx, cy] = key.split(',').map(Number);
+                    const block = this.grid[cy][cx];
+                    if (!block) continue;
+                    const dirs = [[0, -1, 0, 2], [1, 0, 1, 3], [0, 1, 2, 0], [-1, 0, 3, 1]];
                     for (const [dx, dy, dir, opp] of dirs) {
                         if (block.getConnector(dir)) {
-                            const nk = `${x + dx},${y + dy}`;
-                            if (!component.has(nk)) return false;
-                            const nb = this.grid[y + dy]?.[x + dx];
+                            const nk = `${cx + dx},${cy + dy}`;
+                            if (!comp.has(nk)) return false;
+                            const nb = this.grid[cy + dy][cx + dx];
                             if (!nb || !nb.getConnector(opp)) return false;
                         }
                     }
@@ -749,305 +2463,325 @@
                 return true;
             }
             
-            clearLoops(loops) {
-                let totalPoints = 0;
-                
-                loops.forEach(loop => {
-                    loop.forEach(key => {
-                        const [x, y] = key.split(',').map(Number);
-                        if (this.grid[y][x]) {
-                            totalPoints += this.grid[y][x].price * loop.size;
-                            this.createExplosion(x, y, this.grid[y][x].color);
-                            this.grid[y][x] = null;
-                        }
-                    });
-                });
-                
-                this.score += totalPoints;
-                this.loops += loops.length;
-                this.addScreenShake(Math.min(loops.length * 3, 15));
-            }
-            
-            hasAnyValidMove() {
+            findLoops() {
+                const loops = [], processed = new Set();
                 for (let y = 0; y < this.gridSize; y++) {
                     for (let x = 0; x < this.gridSize; x++) {
-                        if (this.grid[y][x]) {
-                            for (let ny = 0; ny < this.gridSize; ny++) {
-                                for (let nx = 0; nx < this.gridSize; nx++) {
-                                    if (nx === x && ny === y) continue;
-                                    if (!this.grid[ny][nx]) return true;
-                                }
-                            }
-                        }
+                        const key = `${x},${y}`;
+                        if (!this.grid[y][x] || processed.has(key)) continue;
+                        const comp = this.findConnectedComponent(x, y);
+                        comp.forEach(k => processed.add(k));
+                        if (this.isClosedLoop(comp)) loops.push(comp);
+                    }
+                }
+                return loops;
+            }
+            
+            findConnectedComponent(sx, sy) {
+                const comp = new Set(), queue = [{x: sx, y: sy}], visited = new Set([`${sx},${sy}`]);
+                while (queue.length) {
+                    const {x, y} = queue.shift();
+                    const block = this.grid[y][x];
+                    if (!block) continue;
+                    comp.add(`${x},${y}`);
+                    const dirs = [[0, -1, 0, 2], [1, 0, 1, 3], [0, 1, 2, 0], [-1, 0, 3, 1]];
+                    for (const [dx, dy, dir, opp] of dirs) {
+                        if (!block.getConnector(dir)) continue;
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) continue;
+                        const nb = this.grid[ny][nx];
+                        if (!nb || !nb.getConnector(opp)) continue;
+                        const nk = `${nx},${ny}`;
+                        if (!visited.has(nk)) { visited.add(nk); queue.push({x: nx, y: ny}); }
+                    }
+                }
+                return comp;
+            }
+            
+            assignGlowColors(loops) {
+                this.chainGlowColors.clear();
+                const colors = COLORS.chainColors;
+                loops.forEach((loop, i) => {
+                    const size = loop.size;
+                    const palette = size <= 6 ? colors.small : size <= 10 ? colors.medium : 
+                                   size <= 15 ? colors.large : size <= 20 ? colors.epic : colors.legendary;
+                    const color = palette[i % palette.length];
+                    loop.forEach(k => this.chainGlowColors.set(k, color));
+                });
+            }
+            
+            clearLoops(loops, chainsCleared = 1) {
+                let totalCells = 0, totalPoints = 0;
+                this.lastLoopCells.clear();
+                loops.forEach(loop => {
+                    totalCells += loop.size;
+                    let loopPrice = 0;
+                    loop.forEach(k => {
+                        const [x, y] = k.split(',').map(Number);
+                        if (this.grid[y][x]) loopPrice += this.grid[y][x].price;
+                    });
+                    const points = loopPrice * loop.size;
+                    totalPoints += points;
+                    loop.forEach(k => this.lastLoopCells.add(k));
+                    loop.forEach(k => {
+                        const [x, y] = k.split(',').map(Number);
+                        const color = this.chainGlowColors.get(k) || '#4fc3f7';
+                        this.createExplosion(x, y, color, 'loop');
+                        this.grid[y][x] = null;
+                    });
+                });
+                this.score += totalPoints;
+                this.loops += chainsCleared;
+                this.animateScore(this.score);
+                this.updateScore();
+                this.checkBonusesAvailability();
+                setTimeout(() => { 
+                    this.lastLoopCells.clear(); 
+                    this.chainGlowColors.clear(); 
+                }, 600);
+            }
+            
+            getExplosionEffect(type, size) {
+                const effects = {
+                    'loop': {
+                        particleCount: Math.min(15 + size * 2, 40),
+                        speedMin: 2,
+                        speedMax: 6,
+                        sizeMin: 2,
+                        sizeMax: 5,
+                        decayMin: 0.008,
+                        decayMax: 0.02,
+                        spreadType: 'radial'
+                    },
+                    'hammer': {
+                        particleCount: 25,
+                        speedMin: 4,
+                        speedMax: 8,
+                        sizeMin: 2,
+                        sizeMax: 4,
+                        decayMin: 0.015,
+                        decayMax: 0.03,
+                        spreadType: 'burst'
+                    },
+                    'magic': {
+                        particleCount: 20,
+                        speedMin: 1,
+                        speedMax: 4,
+                        sizeMin: 3,
+                        sizeMax: 6,
+                        decayMin: 0.005,
+                        decayMax: 0.015,
+                        spreadType: 'spiral'
+                    }
+                };
+                return effects[type] || effects['loop'];
+            }
+            
+            createExplosion(gx, gy, color, type = 'loop') {
+                const effect = this.getExplosionEffect(type, this.lastLoopCells.size || 1);
+                const cx = gx * this.cellSize + this.cellSize / 2;
+                const cy = gy * this.cellSize + this.cellSize / 2;
+                const count = effect.particleCount;
+                
+                for (let i = 0; i < count; i++) {
+                    if (this.particles.length >= this.maxParticles) {
+                        this.particles.splice(0, count);
+                    }
+                    
+                    let angle, speed;
+                    if (effect.spreadType === 'radial') {
+                        angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+                        speed = effect.speedMin + Math.random() * (effect.speedMax - effect.speedMin);
+                    } else if (effect.spreadType === 'burst') {
+                        angle = Math.atan2(
+                            (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 2
+                        );
+                        speed = effect.speedMin + Math.random() * (effect.speedMax - effect.speedMin);
+                    } else if (effect.spreadType === 'spiral') {
+                        angle = (Math.PI * 2 * i) / count + i * 0.3;
+                        speed = effect.speedMin + (i / count) * (effect.speedMax - effect.speedMin);
+                    }
+                    
+                    this.particles.push({
+                        x: cx,
+                        y: cy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        color: color,
+                        size: effect.sizeMin + Math.random() * (effect.sizeMax - effect.sizeMin),
+                        decay: effect.decayMin + Math.random() * (effect.decayMax - effect.decayMin),
+                        rotation: Math.random() * Math.PI * 2,
+                        rotationSpeed: (Math.random() - 0.5) * 0.3
+                    });
+                }
+            }
+            
+            renderPreviews() {
+                for (let i = 0; i < 3; i++) {
+                    const canvas = document.getElementById(`preview${i}`);
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 50, 50);
+                    if (this.previewBlocks[i]) this.drawBlock(ctx, this.previewBlocks[i], 0, 0, 50, false, true);
+                }
+            }
+            
+            hasConnection(x, y, dir) {
+                const block = this.grid[y]?.[x];
+                if (!block || !block.getConnector(dir)) return false;
+                const dirs = [[0, -1, 2], [1, 0, 3], [0, 1, 0], [-1, 0, 1]];
+                const [dx, dy, opp] = dirs[dir];
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return false;
+                const nb = this.grid[ny][nx];
+                return nb && nb.getConnector(opp);
+            }
+            
+            getGlowColor(x, y) {
+                const key = `${x},${y}`;
+                return this.lastLoopCells.has(key) ? this.chainGlowColors.get(key) || '#fff' : null;
+            }
+            
+            drawBlock(ctx, block, x, y, size, isHighlighted = false, isPreview = false, glowColor = null) {
+                const pad = 2, s = size - pad * 2, px = x + pad, py = y + pad;
+                const gx = Math.floor(x / this.cellSize), gy = Math.floor(y / this.cellSize);
+                
+                let scale = 1;
+                if (!isPreview && this.blockScaleAnimations.has(`${gx},${gy}`))
+                    scale = this.blockScaleAnimations.get(`${gx},${gy}`);
+                
+                const connected = isPreview ? [false, false, false, false] : [0, 1, 2, 3].map(d => this.hasConnection(gx, gy, d));
+                const hasFree = !isPreview && this.grid[gy][gx] && this.hasFreeConnectors(gx, gy);
+                
+                ctx.save();
+                if (scale !== 1) { ctx.translate(px + s/2, py + s/2); ctx.scale(scale, scale); ctx.translate(-(px + s/2), -(py + s/2)); }
+                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 20; }
+                
+                ctx.fillStyle = isHighlighted ? 'rgba(255,255,255,0.4)' : glowColor ? glowColor + '33' : hasFree ? 'rgba(255, 107, 157, 0.15)' : 'rgba(255,255,255,0.1)';
+                ctx.fillRect(px, py, s, s);
+                ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : (hasFree ? '#ff6b9d' : block.color));
+                ctx.lineWidth = glowColor ? 3 : (isHighlighted ? 3 : 2);
+                ctx.lineCap = 'square';
+                ctx.shadowBlur = 0;
+                
+                if (!connected[0]) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + s, py); ctx.stroke(); }
+                if (!connected[1]) { ctx.beginPath(); ctx.moveTo(px + s, py); ctx.lineTo(px + s, py + s); ctx.stroke(); }
+                if (!connected[2]) { ctx.beginPath(); ctx.moveTo(px + s, py + s); ctx.lineTo(px, py + s); ctx.stroke(); }
+                if (!connected[3]) { ctx.beginPath(); ctx.moveTo(px, py + s); ctx.lineTo(px, py); ctx.stroke(); }
+                
+                ctx.strokeStyle = glowColor || (isHighlighted ? '#fff' : block.color);
+                ctx.lineWidth = glowColor ? 5 : (isHighlighted ? 5 : 4);
+                ctx.lineCap = 'round';
+                if (glowColor && !isPreview) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10; }
+                
+                const cx = x + size/2, cy = y + size/2, len = s/2 - 2;
+                if (block.getConnector(0)) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - len - (connected[0] ? 4 : 0)); ctx.stroke(); }
+                if (block.getConnector(1)) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + len + (connected[1] ? 4 : 0), cy); ctx.stroke(); }
+                if (block.getConnector(2)) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + len + (connected[2] ? 4 : 0)); ctx.stroke(); }
+                if (block.getConnector(3)) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - len - (connected[3] ? 4 : 0), cy); ctx.stroke(); }
+                
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = glowColor || (isHighlighted ? '#fff' : block.color);
+                ctx.beginPath(); ctx.arc(cx, cy, glowColor ? 7 : (isHighlighted ? 6 : 5), 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+            
+            hasFreeConnectors(x, y) {
+                const block = this.grid[y][x];
+                if (!block) return false;
+                const dirs = [[0, -1, 0, 2], [1, 0, 1, 3], [0, 1, 2, 0], [-1, 0, 3, 1]];
+                for (const [dx, dy, dir, opp] of dirs) {
+                    if (block.getConnector(dir)) {
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return true;
+                        const nb = this.grid[ny][nx];
+                        if (!nb || !nb.getConnector(opp)) return true;
                     }
                 }
                 return false;
             }
             
-            checkGameOver() {
-                if (this.isProcessing) return;
-                
-                if (!this.hasAnyValidMove()) {
-                    this.isGameOver = true;
-                    setTimeout(() => this.showGameOver(), 500);
-                }
-            }
-            
-            showGameOver() {
-                document.getElementById('finalScore').textContent = `Счёт: ${this.score}`;
-                document.getElementById('finalLoops').textContent = `Петель: ${this.loops}`;
-                document.getElementById('finalMoves').textContent = `Ходов: ${this.moves}`;
-                
-                const isNewRecord = this.score > this.highScore;
-                if (isNewRecord) {
-                    this.highScore = this.score;
-                    localStorage.setItem('loopixShiftHigh', this.highScore);
-                    document.getElementById('newRecordBadge').style.display = 'inline-block';
-                } else {
-                    document.getElementById('newRecordBadge').style.display = 'none';
-                }
-                
-                document.getElementById('gameOverModal').classList.add('show');
-            }
-            
-            showComboPopup(size, points) {
-                const popup = document.getElementById('comboPopup');
-                const textEl = document.getElementById('comboText');
-                const subEl = document.getElementById('comboSub');
-                
-                const phrases = ['LOOP!', 'NICE!', 'GREAT!', 'SUPER!', 'WOW!', 'AMAZING!', 'PERFECT!'];
-                const idx = Math.min(Math.floor(size / 2), phrases.length - 1);
-                textEl.textContent = phrases[idx];
-                textEl.style.color = this.comboColors[Math.floor(Math.random() * this.comboColors.length)];
-                subEl.textContent = `+${points} pts • ${size} blocks`;
-                subEl.style.color = textEl.style.color;
-                
-                popup.classList.remove('show');
-                void popup.offsetWidth;
-                popup.classList.add('show');
-                setTimeout(() => popup.classList.remove('show'), 2000);
-            }
-            
-            activateDarkOverlay(duration) {
-                this.darkOverlay.classList.add('active');
-                setTimeout(() => this.darkOverlay.classList.remove('active'), duration);
-            }
-            
-            addScreenShake(intensity) {
-                this.shakeIntensity = Math.min(intensity, 15);
-            }
-            
-            createExplosion(gx, gy, color) {
-                const cx = gx * this.cellSize + this.cellSize / 2;
-                const cy = gy * this.cellSize + this.cellSize / 2;
-                const count = 20;
-                
-                for (let i = 0; i < count; i++) {
-                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-                    const speed = 3 + Math.random() * 5;
-                    this.particles.push({
-                        x: cx, y: cy,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 1,
-                        color: color,
-                        size: 2 + Math.random() * 4,
-                        decay: 0.01 + Math.random() * 0.025
-                    });
-                }
-            }
-            
-            createMoveParticles(gx, gy, color) {
-                const cx = gx * this.cellSize + this.cellSize / 2;
-                const cy = gy * this.cellSize + this.cellSize / 2;
-                
-                for (let i = 0; i < 10; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 1 + Math.random() * 3;
-                    this.particles.push({
-                        x: cx, y: cy,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 1,
-                        color: '#ffffff',
-                        size: 1 + Math.random() * 2,
-                        decay: 0.03 + Math.random() * 0.03
-                    });
-                }
-            }
-            
-            createSpawnParticles(gx, gy) {
-                const cx = gx * this.cellSize + this.cellSize / 2;
-                const cy = gy * this.cellSize + this.cellSize / 2;
-                
-                for (let i = 0; i < 12; i++) {
-                    const angle = (Math.PI * 2 * i) / 12;
-                    const speed = 2 + Math.random() * 2;
-                    this.particles.push({
-                        x: cx, y: cy,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 1,
-                        color: '#69f0ae',
-                        size: 1.5 + Math.random() * 2.5,
-                        decay: 0.02 + Math.random() * 0.02
-                    });
-                }
-            }
-            
-            drawBlock(ctx, block, x, y, size) {
-                const cx = x + size / 2;
-                const cy = y + size / 2;
-                const pad = 3;
-                const s = size - pad * 2;
-                const px = x + pad;
-                const py = y + pad;
-                
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.beginPath();
-                ctx.roundRect(px, py, s, s, 8);
-                ctx.fill();
-                
-                ctx.strokeStyle = block.color;
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.roundRect(px, py, s, s, 8);
-                ctx.stroke();
-                
-                ctx.strokeStyle = block.color;
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
-                const len = s / 2 - 3;
-                
-                if (block.getConnector(0)) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx, cy - len);
-                    ctx.stroke();
-                }
-                if (block.getConnector(1)) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx + len, cy);
-                    ctx.stroke();
-                }
-                if (block.getConnector(2)) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx, cy + len);
-                    ctx.stroke();
-                }
-                if (block.getConnector(3)) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx - len, cy);
-                    ctx.stroke();
-                }
-                
-                ctx.fillStyle = block.color;
-                ctx.beginPath();
-                ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
             draw() {
                 this.ctx.fillStyle = 'rgba(10, 10, 20, 0.3)';
-                this.ctx.fillRect(0, 0, 360, 360);
+                this.ctx.fillRect(0, 0, 300, 300);
                 
-                this.ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
                 this.ctx.lineWidth = 1;
-                for (let i = 1; i < this.gridSize; i++) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(i * 60, 0);
-                    this.ctx.lineTo(i * 60, 360);
-                    this.ctx.stroke();
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, i * 60);
-                    this.ctx.lineTo(360, i * 60);
-                    this.ctx.stroke();
+                for (let i = 0; i <= this.gridSize; i++) {
+                    this.ctx.beginPath(); this.ctx.moveTo(i * 50, 0); this.ctx.lineTo(i * 50, 300); this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.moveTo(0, i * 50); this.ctx.lineTo(300, i * 50); this.ctx.stroke();
                 }
                 
-                if (this.selectedCell && !this.isProcessing) {
-                    this.validMoves.forEach(move => {
-                        this.ctx.fillStyle = 'rgba(79, 195, 247, 0.12)';
-                        this.ctx.beginPath();
-                        this.ctx.roundRect(move.x * 60 + 2, move.y * 60 + 2, 56, 56, 10);
-                        this.ctx.fill();
-                        this.ctx.strokeStyle = 'rgba(79, 195, 247, 0.3)';
-                        this.ctx.lineWidth = 1.5;
-                        this.ctx.setLineDash([5, 3]);
-                        this.ctx.beginPath();
-                        this.ctx.roundRect(move.x * 60 + 2, move.y * 60 + 2, 56, 56, 10);
-                        this.ctx.stroke();
-                        this.ctx.setLineDash([]);
-                    });
-                }
-                
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        if (this.grid[y][x]) {
-                            const isSelected = this.selectedCell?.x === x && this.selectedCell?.y === y;
-                            
-                            if (isSelected) {
-                                this.ctx.shadowColor = '#ffd700';
-                                this.ctx.shadowBlur = 15;
-                                this.ctx.fillStyle = 'rgba(255, 215, 0, 0.08)';
-                                this.ctx.beginPath();
-                                this.ctx.roundRect(x * 60 + 1, y * 60 + 1, 58, 58, 12);
-                                this.ctx.fill();
-                                this.ctx.shadowBlur = 0;
-                            }
-                            
-                            this.drawBlock(this.ctx, this.grid[y][x], x * 60, y * 60, 60);
-                            
-                            if (isSelected) {
-                                this.ctx.strokeStyle = '#ffd700';
-                                this.ctx.lineWidth = 3;
-                                this.ctx.shadowColor = '#ffd700';
-                                this.ctx.shadowBlur = 8;
-                                this.ctx.beginPath();
-                                this.ctx.roundRect(x * 60 + 2, y * 60 + 2, 56, 56, 12);
-                                this.ctx.stroke();
-                                this.ctx.shadowBlur = 0;
-                            }
-                        }
+                if (this.hoverCell.x >= 0) {
+                    const hx = this.hoverCell.x * 50, hy = this.hoverCell.y * 50;
+                    if (this.hammerMode && this.grid[this.hoverCell.y]?.[this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(255, 213, 79, 0.3)';
+                        this.ctx.fillRect(hx, hy, 50, 50);
+                        this.ctx.strokeStyle = '#ffd54f';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(hx, hy, 50, 50);
+                    } else if (this.magicMode && this.selectedMagicBlock && this.grid[this.hoverCell.y] && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(224, 64, 251, 0.3)';
+                        this.ctx.fillRect(hx, hy, 50, 50);
+                        this.ctx.strokeStyle = '#e040fb';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(hx, hy, 50, 50);
+                        this.ctx.globalAlpha = 0.5;
+                        this.drawBlock(this.ctx, this.selectedMagicBlock, hx, hy, 50, false, true);
+                        this.ctx.globalAlpha = 1;
+                    } else if (this.selectedSlot !== null && this.grid[this.hoverCell.y] && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(79, 195, 247, 0.2)';
+                        this.ctx.fillRect(hx, hy, 50, 50);
+                        const ghost = this.previewBlocks[this.selectedSlot];
+                        if (ghost) { this.ctx.globalAlpha = 0.5; this.drawBlock(this.ctx, ghost, hx, hy, 50, false, true); this.ctx.globalAlpha = 1; }
+                    } else if (this.grid[this.hoverCell.y]?.[this.hoverCell.x]) {
+                        this.ctx.fillStyle = 'rgba(255, 107, 157, 0.2)';
+                        this.ctx.fillRect(hx, hy, 50, 50);
                     }
                 }
                 
+                for (let y = 0; y < this.gridSize; y++)
+                    for (let x = 0; x < this.gridSize; x++)
+                        if (this.grid[y][x])
+                            this.drawBlock(this.ctx, this.grid[y][x], x * 50, y * 50, 50, this.lastLoopCells.has(`${x},${y}`), false, this.getGlowColor(x, y));
+                
+                const delta = this.slowMotionActive ? this.timeScale : 1;
                 this.particles = this.particles.filter(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.15;
-                    p.life -= p.decay;
+                    p.x += p.vx * delta; 
+                    p.y += p.vy * delta; 
+                    p.vy += 0.15 * delta;
+                    p.rotation += (p.rotationSpeed || 0) * delta;
+                    p.life -= (p.decay || 0.02) * delta;
                     if (p.life > 0) {
                         this.ctx.save();
                         this.ctx.globalAlpha = p.life;
                         this.ctx.fillStyle = p.color;
                         this.ctx.shadowColor = p.color;
-                        this.ctx.shadowBlur = 6;
+                        this.ctx.shadowBlur = 8;
                         this.ctx.beginPath();
-                        this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                        this.ctx.fill();
+                        if (p.rotation) {
+                            this.ctx.translate(p.x, p.y);
+                            this.ctx.rotate(p.rotation);
+                            this.ctx.fillRect(-p.size * p.life / 2, -p.size * p.life / 2, p.size * p.life, p.size * p.life);
+                        } else {
+                            this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                            this.ctx.fill();
+                        }
                         this.ctx.restore();
                         return true;
                     }
                     return false;
                 });
+                
+                if (this.particles.length > this.maxParticles) {
+                    this.particles.splice(0, this.particles.length - this.maxParticles);
+                }
             }
             
             animate() {
-                if (this.shakeIntensity > 0.5) {
-                    this.gameContainer.style.transform = `translate(${(Math.random() - 0.5) * this.shakeIntensity * 2}px, ${(Math.random() - 0.5) * this.shakeIntensity * 2}px)`;
-                    this.shakeIntensity *= 0.82;
-                } else {
-                    this.shakeIntensity = 0;
-                    this.gameContainer.style.transform = '';
-                }
-                
+                this.updateScreenShake();
+                this.updateBlockScaleAnimations();
                 this.draw();
                 requestAnimationFrame(() => this.animate());
             }
@@ -1055,43 +2789,144 @@
             updateScore() {
                 if (this.score > this.highScore) {
                     this.highScore = this.score;
-                    localStorage.setItem('loopixShiftHigh', this.highScore);
+                    this.isNewRecord = true;
+                    localStorage.setItem('loopixHigh', this.highScore);
                 }
-                this.displayScore = this.score;
                 document.getElementById('score').textContent = this.displayScore;
                 document.getElementById('highScore').textContent = this.highScore;
-                document.getElementById('moves').textContent = this.moves;
+                document.getElementById('maxCombo').textContent = this.maxCombo;
+            }
+            
+            generateShareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                const ctx = canvas.getContext('2d');
+                const w = 1080, h = 1080;
+                
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#1a1a3e'); grad.addColorStop(0.5, '#2d2d5a'); grad.addColorStop(1, '#1a1a3e');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+                
+                ctx.font = 'bold 120px -apple-system, sans-serif'; ctx.textAlign = 'center';
+                const tg = ctx.createLinearGradient(w/2-200, 0, w/2+200, 0);
+                tg.addColorStop(0, '#4fc3f7'); tg.addColorStop(0.5, '#69f0ae'); tg.addColorStop(1, '#ffd54f');
+                ctx.fillStyle = tg; ctx.shadowColor = '#4fc3f7'; ctx.shadowBlur = 30;
+                ctx.fillText('LOOPIX', w/2, 180);
+                
+                ctx.shadowBlur = 0; ctx.font = 'bold 50px -apple-system, sans-serif';
+                ctx.fillStyle = '#ffd54f'; ctx.shadowColor = '#ff8a65'; ctx.shadowBlur = 20;
+                ctx.fillText(I18N.t('newRecord'), w/2, 280);
+                
+                ctx.shadowBlur = 0; ctx.font = 'bold 90px -apple-system, sans-serif';
+                ctx.fillStyle = '#4fc3f7'; ctx.shadowColor = '#4fc3f7'; ctx.shadowBlur = 25;
+                ctx.fillText(this.score.toString(), w/2, 420);
+                
+                ctx.font = '40px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.shadowBlur = 10;
+                ctx.fillText(I18N.t('points'), w/2, 490);
+                
+                ctx.font = '35px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 0;
+                ctx.fillText(`🌀 ${I18N.t('finalLoops').replace(':', '')}: ${this.loops}`, w/2, 620);
+                ctx.fillStyle = '#ffd54f'; ctx.fillText(`⚡ ${I18N.t('maxCombo')}: x${this.maxCombo}`, w/2, 690);
+                
+                ctx.font = 'bold 45px -apple-system, sans-serif';
+                ctx.fillStyle = '#ff8a65'; ctx.shadowColor = '#ff8a65'; ctx.shadowBlur = 20;
+                ctx.fillText(I18N.t('canYouBeat'), w/2, 820);
+                
+                ctx.font = '30px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 0;
+                ctx.fillText('Loopix v1.0', w/2, 980);
+            }
+            
+            downloadShareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                const link = document.createElement('a');
+                link.download = 'loopix-record.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            async shareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const file = new File([blob], 'loopix-record.png', { type: 'image/png' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                title: I18N.t('shareTitle'),
+                                text: I18N.t('shareText', { score: this.score }),
+                                files: [file]
+                            });
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('Share failed, falling back to download:', e);
+                    }
+                }
+                this.downloadShareImage();
+            }
+            
+            closeShareModal() {
+                document.getElementById('shareModal').classList.remove('show');
+                document.getElementById('gameOverModal').classList.add('show');
             }
             
             newGame() {
+                if (this.adInterval) {
+                    clearInterval(this.adInterval);
+                    this.adInterval = null;
+                }
+                if (this.loopClearTimeout) {
+                    clearTimeout(this.loopClearTimeout);
+                    this.loopClearTimeout = null;
+                }
+                
                 this.isGameOver = false;
-                this.isProcessing = false;
-                this.score = 0;
-                this.displayScore = 0;
-                this.loops = 0;
-                this.moves = 0;
+                this.isProcessingLoop = false;
+                this.score = 0; this.displayScore = 0; this.loops = 0; this.combo = 1;
                 this.difficultyLevel = 0;
-                this.nextBlock = null;
-                this.selectedCell = null;
-                this.validMoves = [];
-                this.particles = [];
-                this.shakeIntensity = 0;
-                
-                document.getElementById('gameOverModal').classList.remove('show');
-                document.getElementById('newRecordBadge').style.display = 'none';
+                this.previewBlocks = [null, null, null]; this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
+                this.lastLoopCells.clear(); this.chainGlowColors.clear(); this.particles = [];
+                this.hammerMode = false; this.magicMode = false;
+                this.hammerUsed = false; this.magicUsed = false;
+                this.hammerAvailable = true; this.magicAvailable = true;
+                this.nextHammerAt = 2000; this.nextMagicAt = 2000;
+                this.selectedMagicBlock = null;
+                this.shakeIntensity = 0; this.blockScaleAnimations.clear();
+                this.slowMotionActive = false; this.timeScale = 1;
+                this.dragActive = false; this.dragRotated = false;
+                this.longestChain = null; this.longestChainLength = 0;
+                this.isNewRecord = false;
+                this.pendingLoops = null;
                 this.darkOverlay.classList.remove('active');
+                this.canvas.classList.remove('hammer-mode', 'magic-mode', 'hammer-target', 'magic-target', 'slow-motion-active');
+                document.getElementById('hammerBtn').classList.remove('disabled');
+                document.getElementById('magicBtn').classList.remove('disabled');
+                document.getElementById('hammerIndicator').classList.remove('show');
+                document.getElementById('magicIndicator').classList.remove('show');
+                document.getElementById('gameOverModal').classList.remove('show');
+                document.getElementById('shareModal').classList.remove('show');
+                document.getElementById('rescueModal').classList.remove('show');
+                document.getElementById('adModal').classList.remove('show');
+                document.getElementById('magicBlockModal').classList.remove('show');
                 this.gameContainer.style.transform = '';
-                
+                localStorage.removeItem('loopixSave');
                 this.setupGrid();
-                this.spawnInitialBlocks();
-                this.generateNextBlock();
+                this.placeInitialBlocks();
+                this.generateNewSet();
                 this.updateScore();
-                this.updateDifficultyIndicator();
+                this.updateUITexts();
             }
         }
         
+        let game;
         document.addEventListener('DOMContentLoaded', () => {
-            new LoopixShift();
+            game = new Loopix();
+            window.game = game;
         });
     </script>
 </body>
